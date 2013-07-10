@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 
-from pattern.web import SEARCH
+from pattern.vector import *
 from pattern.web import Google, Twitter, Facebook, Bing
 from epidetect import Evaluator
 
@@ -25,7 +25,7 @@ class SVMLearner:
     ''' This class holds method stubs and some utilities for 
         implementing the Support Vector Machine (SVM) algorithm.
     '''
-       
+    
     def learn(self, *args, **kwargs):
         ''' Perform learning of a Model from training data using SVM algorithm.
         '''

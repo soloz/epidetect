@@ -6,6 +6,7 @@ from pattern.web import Google, Twitter, Facebook, Bing, hashtags
 from pattern.db  import Datasheet, pprint
 from pattern.search import taxonomy, search
 from pattern.en import parsetree
+import json
 
 class TweetExtractor:
     ''' This class will extract tweets from Twitter via the Twitter search and streaming APIs. 
@@ -94,3 +95,20 @@ class TweetExtractor:
 
         print "Total results:", len(stream_table)
         print
+
+        
+    def csvBuilderFromSource(self):
+        data = []
+        with open('../../data/0001.json') as f:
+            for line in f:
+                data.append(json.loads(line))
+        myfile = open('../../data/output.json')
+        myfile.write(data)
+        myfile.close()
+
+
+    def csvBuilderFromEn(self):
+        json_data=open('../../data/0001.json').read()
+        data = json.loads(json_data)
+
+        print data

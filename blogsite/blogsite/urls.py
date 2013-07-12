@@ -15,5 +15,6 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^polls/', include('polls.urls', namespace="polls")),
     url(r'^epiweb/', include('epiweb.urls', namespace="epiweb")),
+    url(r'^epiweb/prototype', include('epiweb.urls', namespace="epiweb")),
     url(r'^admin/', include(admin.site.urls)),
 )

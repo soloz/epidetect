@@ -3,6 +3,7 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from epi.models import Tweet
 from django.views import generic
+from epiweb.prototypeform import ClassifyDocument
 
 class IndexView(generic.ListView):
     template_name = 'epiweb/index.html'
@@ -26,3 +27,17 @@ class DetailView(generic.DetailView):
         Excludes any polls that aren't published yet.
         """
         return Tweet.objects.all()
+
+def formhandler(request):
+    if request.method == 'POST': # If the form has been POSTed, request.method contains appropriate POST value...
+        form = ClassifyDocument(request.POST) # Bind the Classify Document Form to the POSTed data
+        if form.is_valid(): # All validation rules pass
+            # Process the classify document form data in form.cleaned_data
+            document = form.cleaned_data['text']
+            return HttpResponseRedirect('/documentclass/') # Redirect after POST to appropriate method to display documetn class
+    else:
+        form = ClassifyDocument() # Create an unbound Classify Document form
+
+    return render(request, 'epiweb/classify.html', {
+        'form': form,
+    })

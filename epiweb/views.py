@@ -4,6 +4,7 @@ from django.core.urlresolvers import reverse
 from epi.models import Tweet
 from django.views import generic
 from epiweb.prototypeform import ClassifyDocument
+from epi.classification import NaiveBayes
 
 class IndexView(generic.ListView):
     template_name = 'epiweb/index.html'
@@ -34,7 +35,15 @@ def formhandler(request):
         if form.is_valid(): # All validation rules pass
             # Process the classify document form data in form.cleaned_data
             document = form.cleaned_data['text']
-            return HttpResponseRedirect('/documentclass/') # Redirect after POST to appropriate method to display documetn class
+            outcome = document
+
+            model = NaiveBayes()
+            classifier = model.buildModel()
+            outcome = model.classify(document, classifier)
+
+            return render(request, 'epiweb/classify.html', {
+                'outcome':outcome
+            }) # Redirect after POST to appropriate method to display documetn class
     else:
         form = ClassifyDocument() # Create an unbound Classify Document form
 

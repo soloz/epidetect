@@ -20,16 +20,9 @@ class NaiveBayes:
         global classifier
 
         #Sample documents obtained from corpus.
-        pos_tweets = [('I love this car', 'positive'),('This view is amazing', 'positive'),
-        ('I feel great this morning', 'positive'),('I am so excited about the concert', 'positive'),
-        ('He is my best friend', 'positive')]
-
-        neg_tweets = [('I do not like this car', 'negative'),('This view is horrible', 'negative'),
-        ('I feel tired this morning', 'negative'),('I am not looking forward to the concert', 'negative'),('He is my enemy', 'negative')]
-
         tweets = []
 
-        pos_event_tweets = [('10 cases of h1n1 has been reported in london', 'positive'),('5 killed in saudi of h1n1', 'positive'),
+        pos_event_tweets = [('10 cases of h1n1 has been reported in saudi', 'positive'),('5 killed in saudi of h1n1', 'positive'),
         ('10 people have been said to contract h1n1', 'positive'),('25 people infected with h1n1 now in the hospital in argentina', 'positive'),
         ('traces of h1n1 recorded near turkey', 'positive'), ('private hospitals advised to close down because of the noticed h1n1', 'positive'),
          ('2 people dead from h1n1 virus', 'positive')        ]
@@ -84,11 +77,10 @@ class NaiveBayes:
             features['contains(%s)' % word] = (word in document_words)
         return features    
 
-
     def classify(self, *args):
         ''' Performs classification of new documents.
         '''
-        print args[1].classify(self.extract_features(args[0].split()))
+        return args[1].classify(self.extract_features(args[0].split()))
 
 
 class KMeansLeaner:

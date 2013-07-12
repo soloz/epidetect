@@ -100,6 +100,9 @@
         <p><a href="#" class="btn btn-primary btn-large">Learn more &raquo;</a></p>
       </div>
 
+        {% if outcome %}
+              <p> This is the output. {{outcome}}</p>
+        {% else %}
 				<form  action="/epiweb/prototype" method="post">{% csrf_token %}
 					<fieldset>
 						<!-- Form Name -->
@@ -131,7 +134,7 @@
 						</div>
 					</fieldset>
 				</form>
-
+      {% endif %}  
   <hr>
 
   <footer>

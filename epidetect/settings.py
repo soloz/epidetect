@@ -1,4 +1,4 @@
-# Django settings for blogsite project.
+# Django settings for epidetect project.
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -12,7 +12,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '../databases/blogsite/blogsite',                      # Or path to database file if using sqlite3.
+        'NAME': 'databases/epi/epi',                      # Or path to database file if using sqlite3.
         # The following settings are not used with sqlite3:
         'USER': '',
         'PASSWORD': '',
@@ -102,10 +102,10 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'blogsite.urls'
+ROOT_URLCONF = 'epidetect.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'blogsite.wsgi.application'
+WSGI_APPLICATION = 'epidetect.wsgi.application'
 
 TEMPLATE_DIRS = (
     'templates',
@@ -125,7 +125,6 @@ INSTALLED_APPS = (
      'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-'polls',
 'epi',
 'epiweb',
 )

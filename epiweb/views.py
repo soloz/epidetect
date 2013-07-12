@@ -50,3 +50,7 @@ def formhandler(request):
     return render(request, 'epiweb/classify.html', {
         'form': form,
     })
+
+
+def documentclass(request):
+    pass

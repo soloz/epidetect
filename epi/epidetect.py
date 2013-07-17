@@ -72,7 +72,7 @@ class Utility:
         not performed by other classes.
     '''
        
-    def performAction(self, *args, **kwargs):
+    def detectLocation(self, *args, **kwargs):
         ''' Perform undefined actions.
         '''
         pass

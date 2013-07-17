@@ -1,4 +1,5 @@
 from django.db import models
+import datetime
 
 # Create your models here.
 
@@ -41,17 +42,21 @@ class Tweet(models.Model):
     source = models.CharField(max_length=20)
     urlentity = models.CharField(max_length=20)
     hashtagentity = models.CharField(max_length=20)
-    count = models.PositiveIntegerField()
-    location= models.ForeignKey(Location)
+    tweet_time = models.DateTimeField(db_index=True, default=datetime.datetime.now)
+    location= models.ForeignKey(Location, null=True, blank=True)
     
     def __unicode__(self):
-        return self.status
+        return self.text
 
     def getStatus(self):
         pass
 
     class Meta:
         db_table = "epi_tweet"
+
+    @staticmethod
+    def get_all_tweets():
+        return Tweet.objects.all()
 
 
 class Reports(models.Model):

@@ -32,9 +32,11 @@ class DetailView(generic.DetailView):
 def formhandler(request):
     if request.method == 'POST': # If the form has been POSTed, request.method contains appropriate POST value...
         form = ClassifyDocument(request.POST) # Bind the Classify Document Form to the POSTed data
+
         if form.is_valid(): # All validation rules pass
             # Process the classify document form data in form.cleaned_data
             document = form.cleaned_data['text']
+            #user = form.cleaned_data['userid']
             outcome = document
 
             model = NaiveBayes()
@@ -44,6 +46,9 @@ def formhandler(request):
             return render(request, 'epiweb/classify.html', {
                 'outcome':outcome
             }) # Redirect after POST to appropriate method to display documetn class
+        else:
+            print "Submitted form is Invalid. Please verify that all fields are completed"
+
     else:
         form = ClassifyDocument() # Create an unbound Classify Document form
 

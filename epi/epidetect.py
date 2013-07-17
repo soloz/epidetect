@@ -3,7 +3,7 @@
 
 from pattern.web import SEARCH
 from pattern.web import Google, Twitter, Facebook, Bing
-
+from pygeocoder import Geocoder
 
 class Evaluator:
     ''' This class holds method stubs and some utilities for 
@@ -65,14 +65,26 @@ class Geologic:
         actual disease locations.
         '''
         pass
-
-
-class Utility:
-    ''' This class is a utility class to perform extra tasks 
-        not performed by other classes.
-    '''
        
     def detectLocation(self, *args, **kwargs):
-        ''' Perform undefined actions.
+        ''' Perform location detection from tweets.
         '''
-        pass
+        results = Geocoder.geocode(args[0])
+        coordinates = results[0].coordinates
+        return coordinates
+
+    def extractLocation(self, *args, **kwargs):
+        '''Performs extraction of Location information from Documents
+        '''
+        document = str(args[0])
+
+        countries = ['Turkey', 'Iran', 'Russia']
+        documentsplit = document.split()
+        print documentsplit
+
+        for word in documentsplit:
+            if (word in countries):
+                print "%s is extracted" % word
+                return word
+
+        return False

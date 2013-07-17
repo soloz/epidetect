@@ -5,6 +5,7 @@ from epi.models import Tweet
 from django.views import generic
 from epiweb.prototypeform import ClassifyDocument
 from epi.classification import NaiveBayes
+from epi.epidetect import Geologic
 
 class IndexView(generic.ListView):
     template_name = 'epiweb/index.html'
@@ -42,6 +43,12 @@ def formhandler(request):
             model = NaiveBayes()
             classifier = model.buildModel()
             outcome = model.classify(document, classifier)
+            
+            geologic = Geologic()
+            country = geologic.extractLocation(document)
+
+            if (country):
+                print geologic.detectLocation(country)
 
             return render(request, 'epiweb/classify.html', {
                 'outcome':outcome

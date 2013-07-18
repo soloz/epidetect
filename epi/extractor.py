@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
+
 import os, sys; sys.path.insert(0, os.path.join("..", ".."))
 from pattern.web import SEARCH
 from pattern.web import Google, Twitter, Facebook, Bing, hashtags 

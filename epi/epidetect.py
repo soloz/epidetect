@@ -4,6 +4,7 @@
 from pattern.web import SEARCH
 from pattern.web import Google, Twitter, Facebook, Bing
 from pygeocoder import Geocoder
+from geopy import geocoders   
 
 class Evaluator:
     ''' This class holds method stubs and some utilities for 
@@ -69,16 +70,16 @@ class Geologic:
     def detectLocation(self, *args, **kwargs):
         ''' Perform location detection from tweets.
         '''
-        results = Geocoder.geocode(args[0])
-        coordinates = results[0].coordinates
-        return coordinates
+        g = geocoders.GoogleV3()
+        place, (lat, lng) = g.geocode(args[0])
+        return (lat, lng)
 
     def extractLocation(self, *args, **kwargs):
         '''Performs extraction of Location information from Documents
         '''
         document = str(args[0])
 
-        countries = ['Turkey', 'Iran', 'Russia']
+        countries = ['Turkey', 'Iran', 'Russia', 'Pakistan']
         documentsplit = document.split()
         print documentsplit
 

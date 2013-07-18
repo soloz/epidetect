@@ -16,6 +16,10 @@ class LocationType(models.Model):
     class Meta:
         db_table = "epi_locationtype"
 
+    @staticmethod
+    def get_all_locationtypes():
+        return LocationType.objects.all()
+
 class Location(models.Model):
     """A Location is technically a geopgraphical point (lat+long), but could be
        used to represent a large area such as a city or country. It is recursive
@@ -32,6 +36,10 @@ class Location(models.Model):
 
     class Meta:
         db_table = "epi_location"
+
+    @staticmethod
+    def get_all_locations():
+        return Location.objects.all()
 
 class Tweet(models.Model):
     """A Tweet represents a twitter message."""

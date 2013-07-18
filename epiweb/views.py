@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
-from epi.models import Tweet
+from epi.models import *
 from django.views import generic
 from epiweb.prototypeform import ClassifyDocument
 from epi.classification import NaiveBayes
@@ -48,7 +48,18 @@ def formhandler(request):
             country = geologic.extractLocation(document)
 
             if (country):
-                print geologic.detectLocation(country)
+                print "Geolocaiton of %s is (%.5f, %.5f). Storing location information for document" % (country, geologic.detectLocation(country)[0], geologic.detectLocation(country)[1])
+		lat = "%.6f" % geologic.detectLocation(country)[0]
+		lng = "%.6f" % geologic.detectLocation(country)[1]
+
+		locationtype = LocationType.get_all_locationtypes()[0]
+		location = Location()
+		location.name = country
+		location.latitude = lat
+		location.longitude = lng
+		location.level = 1
+		location.locationtype = locationtype
+		location.save()
 
             return render(request, 'epiweb/classify.html', {
                 'outcome':outcome
@@ -62,7 +73,6 @@ def formhandler(request):
     return render(request, 'epiweb/classify.html', {
         'form': form,
     })
-
 
 def documentclass(request):
     pass

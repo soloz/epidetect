@@ -7,6 +7,9 @@ from pattern.web import Google, Twitter, Facebook, Bing, hashtags
 from pattern.db  import Datasheet, pprint
 from pattern.search import taxonomy, search
 from pattern.en import parsetree
+from classification import *
+from epi.epidetect import *
+
 import json
 
 class TweetExtractor:
@@ -66,7 +69,7 @@ class TweetExtractor:
 
         #twitter_api = Twitter(license=None,language="en")
 
-        stream_api = Twitter().stream("flu, swine flu, West Nile Virus, Tuberculosis, Avian Influenza, Influenza, Measles, Acute Intestinal Infection, Dengue, Respiratory Syndrome, Albinism, Coronavirus, Polio, Legionella, Gastroenteric Syndrome, African Swine, H1N1, Hepatitis A, Ebola, Hendra Virus, Influenzavirus, Meningitis, H7N9 virus, SARS",timeout=30)
+        stream_api = Twitter().stream("flu, swine flu, West Nile Virus, Tuberculosis, Avian Influenza, Influenza, Measles, Acute Intestinal Infection, Dengue, Respiratory Syndrome, Albinism, Coronavirus, Polio, Legionella, Gastroenteric Syndrome, African Swine, H1N1, Hepatitis A, Ebola, Hendra Virus, Influenzavirus, Meningitis, H7N9 virus, SARS")
 
         while True:
         #for i in range(100):
@@ -76,11 +79,19 @@ class TweetExtractor:
             # The stream is a list of buffered tweets so far,
             # with the latest tweet at the end of the list.
             for tweet in reversed(stream_api):
-                print tweet.text
-                print tweet.language
-                print tweet.author
-                print tweet.date    
-                print hashtags(tweet.text) 
+                print "Tweet is %s" % tweet.text
+                
+                lang = LangDetect()
+
+                if (lang.lang_detect(tweet.text)):
+                    model = NaiveBayes()
+                    classifier = model.buildModel()
+                    label = model.classify(tweet.text, classifier)
+                    
+                    print "Label of tweet is %s" % label
+                    
+                    geologic = Geologic()
+                    country = geologic.extractLocation(tweet.text)
 
                 id = str(hash(tweet.author + tweet.text))
 

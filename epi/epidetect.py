@@ -5,6 +5,8 @@ from pattern.web import SEARCH
 from pattern.web import Google, Twitter, Facebook, Bing
 from pygeocoder import Geocoder
 from geopy import geocoders   
+from nltk import wordpunct_tokenize
+from nltk.corpus import stopwords
 
 class Evaluator:
     ''' This class holds method stubs and some utilities for 
@@ -77,15 +79,47 @@ class Geologic:
     def extractLocation(self, *args, **kwargs):
         '''Performs extraction of Location information from Documents
         '''
-        document = str(args[0])
+       
+        try: 
+            document = str(args[0])
 
-        countries = ['Turkey', 'Iran', 'Russia', 'Pakistan']
-        documentsplit = document.split()
-        print documentsplit
+            countries = ['Turkey', 'Iran', 'Russia', 'Pakistan']
+            documentsplit = document.split()
 
-        for word in documentsplit:
-            if (word in countries):
-                print "%s is extracted" % word
-                return word
+            for word in documentsplit:
+                if (word in countries):
+                    print "%s is extracted" % word
+                    return word
+        except UnicodeEncodeError:
+            print "Unable to encode some character(s) in tweet"    
 
         return False
+
+class LangDetect:
+    ''' This class detects the language of a document using a likelihood algorithm and NLTK tokenizer.
+    '''
+    
+    def lang_detect(self, document):
+        ratios = self.lang_likelihood(document)
+        most_rated_language = max(ratios, key=ratios.get)
+        
+        if ('en' in most_rated_language):
+            return True
+
+        return False
+    
+    def lang_likelihood(self, document):
+        languages_likelihood = {}
+
+        tokens = wordpunct_tokenize(document)
+        words = [word.lower() for word in tokens]
+
+        for language in stopwords.fileids():
+            stopwords_set = set(stopwords.words(language))
+            words_set = set(words)
+            common_elements = words_set.intersection(stopwords_set)
+
+            languages_likelihood[language] = len(common_elements) # language "score"
+
+        return languages_likelihood
+

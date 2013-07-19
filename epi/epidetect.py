@@ -47,28 +47,12 @@ class Disambiquator:
         pass
 
 
-class Geologic:
+class LocationDetect:
     ''' This class holds method stubs and some utilities for 
         performing geolocation, geocoding and geonaming of 
         locations.
     '''
-       
-    def geocode(self, *args, **kwargs):
-        ''' Perform geocoding of locations.
-        '''
-        pass
-
-    def geolocate(self, *args, **kwargs):
-        ''' Perform geolocation of disease locations.
-        '''
-        pass
-
-    def geoname(self, *args, **kwargs):
-        ''' Perform mapping of locations in documents to 
-        actual disease locations.
-        '''
-        pass
-       
+      
     def detectLocation(self, *args, **kwargs):
         ''' Perform location detection from tweets.
         '''
@@ -83,7 +67,7 @@ class Geologic:
         try: 
             document = str(args[0])
 
-            countries = ['Turkey', 'Iran', 'Russia', 'Pakistan']
+            countries = ['Turkey', 'Iran', 'Russia', 'Pakistan', 'UAE', 'Saudi Arabia']
             documentsplit = document.split()
 
             for word in documentsplit:

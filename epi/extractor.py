@@ -90,8 +90,8 @@ class TweetExtractor:
                     
                     print "Label of tweet is %s" % label
                     
-                    geologic = Geologic()
-                    country = geologic.extractLocation(tweet.text)
+                    geolocation = LocationDetect()
+                    country = geolocation.extractLocation(tweet.text)
 
                 id = str(hash(tweet.author + tweet.text))
 

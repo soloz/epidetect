@@ -5,20 +5,23 @@ from epi.models import *
 from django.views import generic
 from epiweb.prototypeform import ClassifyDocument
 from epi.classification import NaiveBayes
-from epi.epidetect import Geologic
+from epi.epidetect import *
+from time import time as taim
+import json
 
 class IndexView(generic.ListView):
     template_name = 'epiweb/index.html'
-    context_object_name = 'tweet'
+    context_object_name = 'data'
 
     def get_queryset(self):
         """
         Return the last five published polls (not including those set to be
         published in the future).
         """
-        return Tweet.objects.get(
-            pk=1
-        )
+	data = Tweet.aggregate_by_day()
+	jsondata = json.dumps(data)
+	
+        return data
 
 class DetailView(generic.DetailView):
     model = Tweet
@@ -44,13 +47,13 @@ def formhandler(request):
             classifier = model.buildModel()
             outcome = model.classify(document, classifier)
             
-            geologic = Geologic()
-            country = geologic.extractLocation(document)
+            geolocation = LocationDetect()
+            country = geolocation.extractLocation(document)
 
             if (country):
-                print "Geolocaiton of %s is (%.5f, %.5f). Storing location information for document" % (country, geologic.detectLocation(country)[0], geologic.detectLocation(country)[1])
-		lat = "%.6f" % geologic.detectLocation(country)[0]
-		lng = "%.6f" % geologic.detectLocation(country)[1]
+                print "Geolocaiton of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
+		lat = "%.6f" % geolocation.detectLocation(country)[0]
+		lng = "%.6f" % geolocation.detectLocation(country)[1]
 
 		locationtype = LocationType.get_all_locationtypes()[0]
 		location = Location()

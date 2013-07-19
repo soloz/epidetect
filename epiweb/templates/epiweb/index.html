@@ -1,5 +1,6 @@
 {% load staticfiles %}
 
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -51,6 +52,7 @@
 
   </head>
 
+{% block content %}
   <body>
 
     <div class="navbar navbar-inverse navbar-fixed-top">
@@ -142,10 +144,29 @@
         </div>
 
       </div>
-      <p id="chart" style="width:600px; height:400px;"></p>
-      
-      <p> {{tweet.owner}}</p>
-      <hr>
+
+
+<script type="text/javascript">
+   var mydata = "{{ data }}";
+   var mydata2 = "{{ json.dumps(elem.strip() for elem in data.split(',')) }}";
+
+</script>
+
+   <p id="chart" style="width:600px; height:400px;"></p>
+
+	<script type="text/javascript">
+	 {% for date, data in data %}
+		   var date = "{{date}}"
+		   var value = "{{data}}"
+	 {% endfor %}
+	</script>
+  <hr>
+
+
+	 {% for date, data in data %}
+		   {{date}}
+		   {{data}}
+	 {% endfor %}
 
       <footer>
         <p>&copy; University of St Andrews 2013</p>
@@ -176,7 +197,7 @@
     <script src="{% static 'epiweb/mapbox/js/samplemap2.js' %}"></script>
     <script src="{% static 'epiweb/highcharts/js/exporting.js' %}"></script>
     <script src="{% static 'epiweb/highcharts/js/trend.js' %}"></script>
-    <script src="{% static 'epiweb/highcharts/js/trend2.js' %}"></script>
+    <script src="{% static 'epiweb/highcharts/js/disease_trend.js' %}"></script>
     <script src="{% static 'epiweb/d3/js/d3.v3.min.js' %}"></script>
     <script src="{% static 'epiweb/d3/js/d3.v2.min.js' %}"></script>
     <script src="{% static 'epiweb/d3/js/highlight.min.js' %}"></script>
@@ -184,4 +205,6 @@
     
    
   </body>
+{% endblock %}
+
 </html>

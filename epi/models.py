@@ -1,5 +1,5 @@
 from django.db import models
-import datetime
+from datetime import datetime, timedelta
 
 # Create your models here.
 
@@ -50,7 +50,7 @@ class Tweet(models.Model):
     source = models.CharField(max_length=20)
     urlentity = models.CharField(max_length=20)
     hashtagentity = models.CharField(max_length=20)
-    tweet_time = models.DateTimeField(db_index=True, default=datetime.datetime.now)
+    tweet_time = models.DateTimeField(db_index=True, default=datetime.now)
     location= models.ForeignKey(Location, null=True, blank=True)
     
     def __unicode__(self):
@@ -66,6 +66,32 @@ class Tweet(models.Model):
     def get_all_tweets():
         return Tweet.objects.all()
 
+    @staticmethod
+    def aggregate_by_day():
+	days = 3
+	data = []
+	
+	for i in range(days):
+	    startdate = datetime.today() + timedelta(days=-(days-i))
+	    enddate = datetime.today() + timedelta(days=-(days-i-1))
+	    daily_tweets = Tweet.objects.filter(tweet_time__range = [startdate,enddate])
+	    current_day = startdate + timedelta(days=i)
+	    dateinfo = str(current_day).split(':')[0].split()[0].split('-')
+	    dateinfo = map(int, dateinfo)
+	    daily_data = [dateinfo,len(daily_tweets)]
+
+
+	    data.append(daily_data)
+
+	return data
+
+    @staticmethod
+    def aggregate_by_week():
+	pass 
+
+    @staticmethod
+    def aggregate_by_month():
+	pass 
 
 class Reports(models.Model):
     """This class models report types; Maps, Trend Charts, Visualization and Alerts graphs."""

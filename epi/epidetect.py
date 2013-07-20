@@ -6,6 +6,7 @@ from pattern.web import Google, Twitter, Facebook, Bing
 from pygeocoder import Geocoder
 from geopy import geocoders   
 from nltk import wordpunct_tokenize
+from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 
 class Evaluator:
@@ -34,8 +35,6 @@ class Evaluator:
         '''
         pass
 
-
-
 class Disambiquator:
     ''' This class holds method stubs and some utilities for 
         performing disambiquation.
@@ -45,7 +44,6 @@ class Disambiquator:
         ''' Perform disambiquation on a given collection of documents.
         '''
         pass
-
 
 class LocationDetect:
     ''' This class holds method stubs and some utilities for 
@@ -65,12 +63,12 @@ class LocationDetect:
         '''
        
         try: 
-            document = str(args[0])
+            tokenizer = RegexpTokenizer(r'\w+|[^\w\s]+')
 
-            countries = ['Turkey', 'Iran', 'Russia', 'Pakistan', 'UAE', 'Saudi Arabia']
-            documentsplit = document.split()
+            countries = ['Turkey', 'Iran', 'Russia', 'Pakistan', 'UAE', 'Saudi Arabia', 'Sudan', 'Somalia']
+            tokens = tokenizer.tokenize(args[0])
 
-            for word in documentsplit:
+            for word in tokens:
                 if (word in countries):
                     print "%s is extracted" % word
                     return word

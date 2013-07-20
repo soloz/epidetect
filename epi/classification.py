@@ -30,7 +30,8 @@ class NaiveBayes:
          ('2 people dead from h1n1 virus', 'positive'), 
          ('H1N1 flu outbreak in northern Chile kills 11: SANTIAGO - At least 11 people have been killed in an  outbreak', 'positive'),
          (' Why H7N9 bird flu cases arose so quickly.', 'positive'),
-         ('H1N1 flu outbreak in northern Chile kills 11', 'positive')         ]
+         ('H1N1 flu outbreak in northern Chile kills 11', 'positive'),
+         ('New case of h1n1 confirmed in China', 'positive')         ]
 
         neg_event_tweets_train = [('how to take care of h1n1', 'negative'),('h1n1 and how to prevent it', 'negative'),
         ('i\'m having flu', 'negative'),('is h1n1 a deluge in the 21st century ?', 'negative'),
@@ -38,7 +39,8 @@ class NaiveBayes:
         ('what are the symptoms of h1n1 virus', 'negative'),
         ('Thought it was flu. The doctor said no. There are giant lumps in my throat. I have to take a shitload of antibiotics. It\'s rubbish', 'negative'),
         ('Nursing Students Forced To Have Flu Shot ', 'negative'),
-        ('EG Flu Tracking News Virus cuts gold kiwifruit crop', 'negative')]
+        ('EG Flu Tracking News Virus cuts gold kiwifruit crop', 'negative'),
+        ('how can we curb the situation of h1n1 ? ', 'negative')]
 
 
         pos_event_tweets_test = [('there are 7 reported cases of h1n1 in zambia', 'positive'),('5 reported dead repeated cases of h1n1', 'positive'),

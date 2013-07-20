@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import datetime, timedelta
+import time
 
 # Create your models here.
 
@@ -68,30 +69,29 @@ class Tweet(models.Model):
 
     @staticmethod
     def aggregate_by_day():
-	days = 3
-	data = []
-	
-	for i in range(days):
-	    startdate = datetime.today() + timedelta(days=-(days-i))
-	    enddate = datetime.today() + timedelta(days=-(days-i-1))
-	    daily_tweets = Tweet.objects.filter(tweet_time__range = [startdate,enddate])
-	    current_day = startdate + timedelta(days=i)
-	    dateinfo = str(current_day).split(':')[0].split()[0].split('-')
-	    dateinfo = map(int, dateinfo)
-	    daily_data = [dateinfo,len(daily_tweets)]
+    	days = 3
+    	data = []
+    	
+    	for i in range(days):
+    	    startdate = datetime.today() + timedelta(days=-(days-i))
+    	    enddate = datetime.today() + timedelta(days=-(days-i-1))
+    	    daily_tweets = Tweet.objects.filter(tweet_time__range = [startdate,enddate])
+    	    current_day = startdate + timedelta(days=i)
+    	    #dateinfo = str(current_day).split(':')[0].split()[0].split('-')
+    	    #dateinfo = map(int, dateinfo)
+            utc_seconds = time.mktime(current_day.timetuple())
+            daily_data = [utc_seconds,len(daily_tweets)]
+            data.append(daily_data)
 
-
-	    data.append(daily_data)
-
-	return data
+    	return data
 
     @staticmethod
     def aggregate_by_week():
-	pass 
+    	pass 
 
     @staticmethod
     def aggregate_by_month():
-	pass 
+	   pass 
 
 class Reports(models.Model):
     """This class models report types; Maps, Trend Charts, Visualization and Alerts graphs."""

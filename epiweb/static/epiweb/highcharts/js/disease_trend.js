@@ -1,5 +1,12 @@
        $(function () {
-alert(mydata2)
+
+        chartdata = new Array()
+
+        for (var i=0;i<mydata.length;i++)
+        {
+            chartdata.push([mydata[i][0]*1000, mydata[i][1]]) 
+        }
+
         $('#container2').highcharts({
             chart: {
                 type: 'spline'
@@ -8,7 +15,7 @@ alert(mydata2)
                 text: 'Trends of Diseases on The Social Media'
             },
             subtitle: {
-                text: date
+                text: 'Hello'
             },
             xAxis: {
                 type: 'datetime',
@@ -31,12 +38,7 @@ alert(mydata2)
             
             series: [{
                 name: 'Twitter',
-                data: [
-                    [Date.UTC(2013,  6,  16), length(date)],
-                    [Date.UTC(2013, 6, 17), 15],
-                    [Date.UTC(2013, 6, 18), 5],
-                    [Date.UTC(2013, 6, 19), 16]
-                ]
+                data: chartdata
             }]
         });
     });

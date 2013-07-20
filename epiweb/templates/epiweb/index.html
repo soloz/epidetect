@@ -147,26 +147,19 @@
 
 
 <script type="text/javascript">
-   var mydata = "{{ data }}";
-   var mydata2 = "{{ json.dumps(elem.strip() for elem in data.split(',')) }}";
-
+   var mydata = {{ data|safe }};
 </script>
 
    <p id="chart" style="width:600px; height:400px;"></p>
 
-	<script type="text/javascript">
-	 {% for date, data in data %}
-		   var date = "{{date}}"
-		   var value = "{{data}}"
+	 {% for date, val in data %}
+		   {{date}}
+		   {{val}}
 	 {% endfor %}
-	</script>
+
   <hr>
 
 
-	 {% for date, data in data %}
-		   {{date}}
-		   {{data}}
-	 {% endfor %}
 
       <footer>
         <p>&copy; University of St Andrews 2013</p>

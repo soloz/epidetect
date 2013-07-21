@@ -93,6 +93,21 @@ class TweetExtractor:
                     geolocation = LocationDetect()
                     country = geolocation.extractLocation(tweet.text)
 
+                    if (country and ('positive' in label)):
+                        print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
+                        lat = "%.5f" % geolocation.detectLocation(country)[0]
+                        lng = "%.5f" % geolocation.detectLocation(country)[1]
+                        print (lat, lng)
+
+                        locationtype = LocationType.get_all_locationtypes()[0]
+                        location = Location()
+                        location.name = country
+                        location.latitude = lat
+                        location.longitude = lng
+                        location.level = 1
+                        location.locationtype = locationtype
+                        location.save()
+
                 id = str(hash(tweet.author + tweet.text))
 
                 if len(stream_table) == 0 or id not in index:

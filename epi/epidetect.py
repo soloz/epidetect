@@ -65,7 +65,7 @@ class LocationDetect:
         try: 
             tokenizer = RegexpTokenizer(r'\w+|[^\w\s]+')
 
-            countries = ['Turkey', 'Iran', 'Russia', 'Pakistan', 'UAE', 'Saudi Arabia', 'Sudan', 'Somalia']
+            countries = ['Turkey', 'Iran', 'Russia', 'Pakistan', 'UAE', 'Saudi Arabia', 'Sudan', 'Somalia', 'China', 'Arabia', 'Saudi']
             tokens = tokenizer.tokenize(args[0])
 
             for word in tokens:

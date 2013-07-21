@@ -26,8 +26,8 @@ class Location(models.Model):
        used to represent a large area such as a city or country. It is recursive
        via the _parent_ field, which can be used to create a hierachy (Country
        -> County -> City) in combination with the _type_ field."""
-    latitude  = models.DecimalField(max_digits=8, decimal_places=6, blank=True, null=True, help_text="The physical latitude of this location")
-    longitude = models.DecimalField(max_digits=8, decimal_places=6, blank=True, null=True, help_text="The physical longitude of this location")
+    latitude  = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, help_text="The physical latitude of this location")
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, help_text="The physical longitude of this location")
     name = models.CharField(max_length=100, help_text="Name of location", db_index=True)
     parent = models.ForeignKey("Location", related_name="children", null=True, blank=True,
         help_text="The parent of this Location. It" +\
@@ -77,8 +77,6 @@ class Tweet(models.Model):
     	    enddate = datetime.today() + timedelta(days=-(days-i-1))
     	    daily_tweets = Tweet.objects.filter(tweet_time__range = [startdate,enddate])
     	    current_day = startdate + timedelta(days=i)
-    	    #dateinfo = str(current_day).split(':')[0].split()[0].split('-')
-    	    #dateinfo = map(int, dateinfo)
             utc_seconds = time.mktime(current_day.timetuple())
             daily_data = [utc_seconds,len(daily_tweets)]
             data.append(daily_data)

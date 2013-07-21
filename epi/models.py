@@ -91,6 +91,52 @@ class Tweet(models.Model):
     def aggregate_by_month():
 	   pass 
 
+
+class GoogleDocument(models.Model):
+    """A Google document represents a search result from google reporting outbreak."""
+    document = models.CharField(max_length=200)
+    owner = models.CharField(max_length=20)
+    label = models.CharField(max_length=20)
+    search_time = models.DateTimeField(db_index=True, default=datetime.now)
+    location= models.ForeignKey(Location, null=True, blank=True)
+    
+    def __unicode__(self):
+        return self.document
+
+    def getStatus(self):
+        pass
+
+    class Meta:
+        db_table = "epi_googledocument"
+
+    @staticmethod
+    def get_all_documents():
+        return GoogleDocument.objects.all()
+
+    @staticmethod
+    def aggregate_by_day():
+        days = 3
+        data = []
+        
+        for i in range(days):
+            startdate = datetime.today() + timedelta(days=-(days-i))
+            enddate = datetime.today() + timedelta(days=-(days-i-1))
+            daily_documents = GoogleDocument.objects.filter(tweet_time__range = [startdate,enddate])
+            current_day = startdate + timedelta(days=i)
+            utc_seconds = time.mktime(current_day.timetuple())
+            daily_data = [utc_seconds,len(daily_documents)]
+            data.append(daily_data)
+
+        return data
+
+    @staticmethod
+    def aggregate_by_week():
+        pass 
+
+    @staticmethod
+    def aggregate_by_month():
+       pass 
+
 class Reports(models.Model):
     """This class models report types; Maps, Trend Charts, Visualization and Alerts graphs."""
     report = models.CharField(max_length=20)

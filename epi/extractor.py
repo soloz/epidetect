@@ -3,7 +3,7 @@
 
 import os, sys; sys.path.insert(0, os.path.join("..", ".."))
 from pattern.web import SEARCH
-from pattern.web import Google, Twitter, Facebook, Bing, hashtags 
+from pattern.web import Google, Twitter, Facebook, Bing, hashtags, plaintext 
 from pattern.db  import Datasheet, pprint
 from pattern.search import taxonomy, search
 from pattern.en import parsetree
@@ -139,3 +139,54 @@ class TweetExtractor:
         data = json.loads(json_data)
 
         print data
+
+class GoogleExtractor:
+    ''' This class will extract search documents from Google via the Google search APIs. 
+    The documents would be stored in a CSV file for model building and subsequently into an SQL database '''
+
+    global engine 
+    engine = Google(license=None, language="en")
+    
+    global q 
+    q= "h1n1, influenza, bird flu, ebola"
+
+    def googleSearch(self):
+        try: 
+        # We extract and store Google documents in a Datasheet that can be saved as a CSV file.
+        # The first column holds unique ID for each document. The CSV file is grown by adding new documents that
+        # haven not previously been encountered. An ID as index on the first column allows for checking if an ID already exists.
+        # The index becomes important once more and more rows are added to the table (performance). 
+        # The CSV is loaded into an SQLite database at some point for future predictions.
+        # It must be noted that the language of search outcomes in Google is somewhat different from the language used in tweets.
+
+            google_search_table = Datasheet.load("google_search_data.csv")
+            index = dict.fromkeys(google_search_table.columns[0], True)
+        except:
+            stream_table = Datasheet()
+            index = {}
+
+        for i in range(1,2):
+            for result in engine.search(q, start=i, count=10, type=SEARCH):
+                print plaintext(result.text) # plaintext() removes HTML formatting.
+                print result.url
+                print result.date
+                print result.author
+                print
+
+class BingExtractor:
+    ''' This class will extract search documents from Bing via the Bing search APIs. 
+    The documents would be stored in a CSV file for model building and subsequently into an SQL database '''
+
+    global engine 
+    engine = Google(license=None, language="en")
+    
+    global q 
+    q= "h1n1, influenza, bird flu, ebola"
+
+    def googleSearch(self):
+        for i in range(1,2):
+            for result in engine.search(q, start=i, count=10, type=SEARCH):
+                print plaintext(result.text) # plaintext() removes HTML formatting.
+                print result.url
+                print result.date
+                print

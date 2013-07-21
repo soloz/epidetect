@@ -55,18 +55,18 @@ def formhandler(request):
             country = geolocation.extractLocation(document)
 
             if (country):
-                print "Geolocaiton of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
-		lat = "%.6f" % geolocation.detectLocation(country)[0]
-		lng = "%.6f" % geolocation.detectLocation(country)[1]
+                print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
+        		lat = "%.6f" % geolocation.detectLocation(country)[0]
+        		lng = "%.6f" % geolocation.detectLocation(country)[1]
 
-		locationtype = LocationType.get_all_locationtypes()[0]
-		location = Location()
-		location.name = country
-		location.latitude = lat
-		location.longitude = lng
-		location.level = 1
-		location.locationtype = locationtype
-		location.save()
+        		locationtype = LocationType.get_all_locationtypes()[0]
+        		location = Location()
+        		location.name = country
+        		location.latitude = lat
+        		location.longitude = lng
+        		location.level = 1
+        		location.locationtype = locationtype
+        		location.save()
 
             return render(request, 'epiweb/classify.html', {
                 'outcome':outcome

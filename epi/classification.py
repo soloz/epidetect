@@ -6,6 +6,10 @@ from pattern.web import Google, Twitter, Facebook, Bing
 from epidetect import Evaluator
 import nltk
 from epi.models import Tweet, Location, LocationType
+from pattern.en     import tag, predicative
+from pattern.vector import SVM, KNN, NB, count, shuffled, Classifier
+from pattern.db  import Datasheet, pprint
+
 
 class NaiveBayes:
     ''' This class implements the Naive Bayes text classifciation algorithm.
@@ -124,13 +128,6 @@ class NaiveBayes:
         '''
         label = args[1].classify(self.extract_train_features(args[0].split()))
 
-        if (label =='positive'):
-            tweet = Tweet()
-            tweet.text = args[0]
-            tweet.label = label
-            tweet.save()
-            print 'the tweet is positive, storing in database'
-
         return label
 
     def testModel(self):
@@ -158,28 +155,77 @@ class SVMLearner:
     ''' This class holds method stubs and some utilities for 
         implementing the Support Vector Machine (SVM) algorithm.
     '''
-    
-    def learn(self, *args, **kwargs):
-        ''' Perform learning of a Model from training data using SVM algorithm.
-        '''
-        pass
+        
+    global classifier
+
+    def testModel(self, *args):
+        if args:
+            classifier = Classifier.load('models/svm_model.ept')
+            print "Document class is %s" % classifier.classify(Document(args[0]))
+
+        else:
+            data = Datasheet.load(os.path.join("databases","epi","svm_source.csv"))
+            i = n = 0
+            for label, document in data[23:34]:
+                if classifier.classify(Document(document)) == (int(score) > 0):
+                    i += 1
+                n += 1
+        
+        print float(i) / n
 
     def buildModel(self, *args, **kwargs):
         ''' Performs model building from training using SVM algorithm.
         '''
-        pass
+        classifier = SVM()
 
-class Classifier:
-    ''' This class holds method stubs and some utilities for 
-        performing document classification using keywords.
-    '''
-       
-    def classify(self, *args, **kwargs):
-        ''' Perform classification of documents using keywords.
-        '''
-        pass
+        print "loading document corpus..."
+        data = Datasheet.load(os.path.join("databases","epi","svm_source.csv"))
+        data = shuffled(data)
 
-    def buildModel(self, *args, **kwargs):
-        ''' Performs model building from training data.
-        '''
-        pass
+        print "training svm model..."
+
+        for label, document in data[:22]:
+            classifier.train(Document(document, type=label))
+
+        try:
+            print "saving build model..."
+            classifier.save('models/svm_model.ept')
+        except:
+            print "cannot save model file for some reason"
+
+    def classify(self, document):
+
+        try: 
+            svm_predictions = Datasheet.load("predictions/svm.csv")
+            svm_corpus = Datasheet.load("corpora/svm/svm.csv")
+
+            index_pred = dict.fromkeys(svm_predictions.columns[0], True)
+            index_corp = dict.fromkeys(svm_corpus.columns[0], True)
+        except:
+            svm_predictions = Datasheet()
+            svm_corpus = Datasheet()
+            index_pred = {}
+            index_corp = {}
+
+
+        classifier = Classifier.load('models/svm_model.ept')
+        label = classifier.classify(Document(document))
+
+        print "Document class is %s" % label
+
+        id = str(hash(label + document))
+
+        if ("1" in label):
+            if len(svm_predictions) == 0 or id not in index_pred:
+                svm_predictions.append([id, label, document])
+                index_pred[id] = True
+                
+        if len(svm_corpus) == 0 or id not in index_corp:
+            svm_corpus.append([id, label, document])
+            index_corp[id] = True
+
+        svm_predictions.save("predictions/svm.csv")
+        svm_corpus.save("corpora/svm/svm.csv")
+
+        print "Total predictions:", len(svm_predictions)
+        print "Total documents in corpus:", len(svm_corpus)

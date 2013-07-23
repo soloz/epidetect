@@ -137,10 +137,56 @@ class GoogleDocument(models.Model):
     def aggregate_by_month():
        pass 
 
-class Reports(models.Model):
+
+class BingDocument(models.Model):
+    """A Google document represents a search result from google reporting outbreak."""
+    document = models.CharField(max_length=200)
+    owner = models.CharField(max_length=20)
+    label = models.CharField(max_length=20)
+    search_time = models.DateTimeField(db_index=True, default=datetime.now)
+    location= models.ForeignKey(Location, null=True, blank=True)
+    
+    def __unicode__(self):
+        return self.document
+
+    def getStatus(self):
+        pass
+
+    class Meta:
+        db_table = "epi_bingdocument"
+
+    @staticmethod
+    def get_all_documents():
+        return BingDocument.objects.all()
+
+    @staticmethod
+    def aggregate_by_day():
+        days = 3
+        data = []
+        
+        for i in range(days):
+            startdate = datetime.today() + timedelta(days=-(days-i))
+            enddate = datetime.today() + timedelta(days=-(days-i-1))
+            daily_documents = BingDocument.objects.filter(tweet_time__range = [startdate,enddate])
+            current_day = startdate + timedelta(days=i)
+            utc_seconds = time.mktime(current_day.timetuple())
+            daily_data = [utc_seconds,len(daily_documents)]
+            data.append(daily_data)
+
+        return data
+
+    @staticmethod
+    def aggregate_by_week():
+        pass 
+
+    @staticmethod
+    def aggregate_by_month():
+       pass 
+
+
+class Report(models.Model):
     """This class models report types; Maps, Trend Charts, Visualization and Alerts graphs."""
     report = models.CharField(max_length=20)
-    
     
     def __unicode__(self):
         return self.status
@@ -149,4 +195,26 @@ class Reports(models.Model):
         pass
 
     class Meta:
-        db_table = "epi_reports"
+        db_table = "epi_report"
+
+    @staticmethod
+    def get_all_reporttypes():
+       pass 
+
+
+class Disease(models.Model):
+    """This class models disease types; It is intended that more diseases would be added via the GUI for future searches."""
+    name = models.CharField(max_length=50)
+    
+    def __unicode__(self):
+        return self.status
+
+    def getStatus(self):
+        pass
+
+    class Meta:
+        db_table = "epi_disease"
+
+    @staticmethod
+    def get_all_diseases():
+       pass 

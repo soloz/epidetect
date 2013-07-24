@@ -240,7 +240,6 @@ class GoogleExtractor:
 
         google_search_table.save("corpora/google/google_search_data.csv")
 
-
         print
         print len(google_search_table), "results."
 

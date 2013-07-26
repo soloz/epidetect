@@ -48,12 +48,14 @@ class Tweet(models.Model):
     owner = models.CharField(max_length=20)
     label = models.CharField(max_length=20)
     usage = models.CharField(max_length=20)
-    disease_type = models.CharField(max_length=20)
+    disease_type = models.CharField(max_length=20, null=True)
     urlentity = models.CharField(max_length=20)
     hashtagentity = models.CharField(max_length=20)
     tweet_time = models.DateTimeField(db_index=True, default=datetime.now)
     location= models.ForeignKey(Location, null=True, blank=True)
-    location_string = models.CharField(max_length=20)
+    location_string = models.CharField(max_length=20, null=True)
+    from_lang = models.CharField(max_length=20)
+    
     
     def __unicode__(self):
         return self.text
@@ -102,6 +104,7 @@ class GoogleDocument(models.Model):
     search_time = models.DateTimeField(db_index=True, default=datetime.now)
     location= models.ForeignKey(Location, null=True, blank=True)
     location_string = models.CharField(max_length=20)
+    from_lang = models.CharField(max_length=20)
     
     def __unicode__(self):
         return self.document
@@ -150,6 +153,7 @@ class BingDocument(models.Model):
     search_time = models.DateTimeField(db_index=True, default=datetime.now)
     location= models.ForeignKey(Location, null=True, blank=True)
     location_string = models.CharField(max_length=20)
+    from_lang = models.CharField(max_length=20)
     
     def __unicode__(self):
         return self.document

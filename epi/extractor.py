@@ -98,7 +98,6 @@ class TweetExtractor:
                     classifier = model.buildModel()
                     label = model.classify(twt.text, classifier)
 
-                    
                     print "Label of tweet is %s" % label
                     
                     id = str(hash(twt.author + twt.text))
@@ -114,7 +113,13 @@ class TweetExtractor:
 
                         geolocation = LocationDetect()
                         country = geolocation.extractLocation(twt.text)
-
+                        
+                        if diseases:
+                            if (len(diseases) > 1):
+                                tweet.disease_type = ','.join(diseases)
+                            else:
+                                tweet.disease_type = diseases[0]
+                                
                         if (country):
                             print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
                             lat = "%.5f" % geolocation.detectLocation(country)[0]
@@ -130,9 +135,10 @@ class TweetExtractor:
                             location.locationtype = locationtype
                             location.save()
                             tweet.location = location
-
+                            tweet.location_string = location.name
+                       
                         print 'the tweet is %s, and storing in tweet database' % label
-                        print 'the tweet categories are', diseases
+                        print 'the tweet categories are ', tweet.disease_type, diseases
 
                         tweet.save()
                         
@@ -141,7 +147,7 @@ class TweetExtractor:
                             index_pred[id] = True
 
                     else:
-                        print 'the tweet is positive, storing in tweet corpus'
+                        print 'the tweet is negative, storing in tweet corpus'
 
                         if len(stream_corpus_table) == 0 or id not in index_corp:
                             stream_corpus_table.append([id, twt.author, twt.text, label, twt.date])
@@ -160,23 +166,7 @@ class TweetExtractor:
         print "Total corpus results:", len(stream_corpus_table)
         print "Total predicted results:", len(stream_predict_table)
         print
-
         
-    def csvBuilderFromSource(self):
-        data = []
-        with open('../../data/0001.json') as f:
-            for line in f:
-                data.append(json.loads(line))
-        myfile = open('../../data/output.json')
-        myfile.write(data)
-        myfile.close()
-
-
-    def csvBuilderFromEn(self):
-        json_data=open('../../data/0001.json').read()
-        data = json.loads(json_data)
-
-        print data
 
 class GoogleExtractor:
     ''' This class will extract search documents from Google via the Google search APIs. 
@@ -197,13 +187,20 @@ class GoogleExtractor:
         # The CSV is loaded into an SQLite database at some point for future predictions.
         # It must be noted that the language of search outcomes in Google is somewhat different from the language used in tweets.
 
-            google_search_table = Datasheet.load("corpora/google/google_search_data.csv")
-            index = dict.fromkeys(google_search_table.columns[0], True)
+            google_corpus_table = Datasheet.load("corpora/google/google_corpus_data.csv")
+            index_corp = dict.fromkeys(google_corpus_table.columns[0], True)
 
+            google_predict_table = Datasheet.load("predictions/NB/nb_google.csv")
+            index_pred = dict.fromkeys(google_predict_table.columns[0], True)
+            
         except:
-            google_search_table = Datasheet()
-            index = {}
+            google_corpus_table = Datasheet()
+            index_corp = {}
+            
+            google_predict_table = Datasheet()
+            index_pred = {}            
 
+            
         for disease in ("flu, swine flu, West Nile Virus, Tuberculosis, Avian Influenza, \
             Influenza, Measles, Acute Intestinal Infection, Dengue, Respiratory Syndrome, \
             Albinism, Coronavirus, Polio, Legionella, Gastroenteric Syndrome, African Swine, \
@@ -228,49 +225,82 @@ class GoogleExtractor:
 
                 print "Document is %s" % s
               
-                lang = LangDetect()
+                langDetect = LangDetect()
+                lang = langDetect.lang_detect(s)
+                                
+                print "Document (and Language) is %s, Lang = %s" % (s, lang)
 
-                if (lang.lang_detect(s)):
+                if ('en' in lang):
                     model = NaiveBayes()
                     classifier = model.buildModel()
                     label = model.classify(s, classifier)
                     
-                    print "Label of tweet is %s" % label
+                    id = str(hash(label + plaintext(result.text)))
+                    
+                    print "Label of document is %s" % label
+                    
                     if (label =='positive'):
                         googledoc = GoogleDocument()
                         googledoc.document = s
                         googledoc.label = label
+                        #googledoc.search_time = result.date TODO: setup pytz to enable date from Google search.
+                        
+                        diseasetype = DiseaseType()
+                        diseases = diseasetype.typedetect(s)
+ 
+                        if diseases:
+                            if (len(diseases) > 1):
+                                googledoc.disease_type = ','.join(diseases)
+                            else:
+                                googledoc.disease_type = diseases[0]
+                       
+                        print 'The document is positive, storing in database'
+
+                        geolocation = LocationDetect()
+                        country = geolocation.extractLocation(s)
+
+                        if (country):
+                            print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
+                            lat = "%.5f" % geolocation.detectLocation(country)[0]
+                            lng = "%.5f" % geolocation.detectLocation(country)[1]
+                            print (lat, lng)
+
+                            locationtype = LocationType.get_all_locationtypes()[0]
+                            location = Location()
+                            location.name = country
+                            location.latitude = lat
+                            location.longitude = lng
+                            location.level = 1
+                            location.locationtype = locationtype
+                            location.save()
+                            googledoc.location = location
+                            googledoc.location_string = location.name                            
+                        
+                        print 'the document is %s, and storing in tweet database' % label
+                        print 'the document categories are ', googledoc.disease_type, diseases
+                        print 'the document location is ', googledoc.location_string
+                        
                         googledoc.save()
-                        print 'the tweet is positive, storing in database'
+                        
+                                   
+                        if len(google_predict_table) == 0 or id not in index_pred:
+                            google_predict_table.append([id, label, plaintext(result.text), result.date])
+                            index_pred[id] = True
+                 
+                    else:
+                        print 'the document is negative, storing in tweet corpus'
 
-                    geolocation = LocationDetect()
-                    country = geolocation.extractLocation(s)
+                        if len(google_corpus_table) == 0 or id not in index_corp:
+                            google_corpus_table.append([id, s, label, result.date])
+                            index_corp[id] = True
 
-                    if (country and ('positive' in label)):
-                        print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
-                        lat = "%.5f" % geolocation.detectLocation(country)[0]
-                        lng = "%.5f" % geolocation.detectLocation(country)[1]
-                        print (lat, lng)
 
-                        locationtype = LocationType.get_all_locationtypes()[0]
-                        location = Location()
-                        location.name = country
-                        location.latitude = lat
-                        location.longitude = lng
-                        location.level = 1
-                        location.locationtype = locationtype
-                        location.save()
-
-                    id = str(hash(label + plaintext(result.text)))               
-                    
-                    if len(google_search_table) == 0 or id not in index:
-                        google_search_table.append([id, label, plaintext(result.text), result.date])
-                        index[id] = True
-
-        google_search_table.save("corpora/google/google_search_data.csv")
+            google_predict_table.save("predictions/NB/nb_google.csv")
+            google_corpus_table.save("corpora/google/google_corpus_data.csv")
 
         print
-        print len(google_search_table), "results."
+        print len(google_corpus_table), "results from corpus table."
+        print len(google_predict_table), "results from predictions table."
 
 class BingExtractor:
     ''' This class will extract search documents from Bing via the Bing search APIs. 
@@ -285,12 +315,19 @@ class BingExtractor:
         # The CSV is loaded into an SQLite database at some point for future predictions.
         # It must be noted that the language of search outcomes in Google is somewhat different from the language used in tweets.
 
-            bing_search_table = Datasheet.load("corpora/bing/bing_search_data.csv")
-            index = dict.fromkeys(bing_search_table.columns[0], True)
+            bing_corpus_table = Datasheet.load("corpora/bing/bing_corpus_data.csv")
+            index_corp = dict.fromkeys(google_corpus_table.columns[0], True)
 
+            bing_predict_table = Datasheet.load("predictions/NB/nb_bing.csv")
+            index_pred = dict.fromkeys(bing_predict_table.columns[0], True)
+            
         except:
-            bing_search_table = Datasheet()
-            index = {}
+            bing_corpus_table = Datasheet()
+            index_corp = {}
+            
+            bing_predict_table = Datasheet()
+            index_pred = {}            
+
 
         q = 'coronavirus'         # Bing search query
 
@@ -306,7 +343,7 @@ class BingExtractor:
         engine = Bing(license=None)
 
         for i in range(1): # max=10
-            for result in engine.search(q, start=i+1, count=100, cached=True):
+            for result in engine.search(q, start=1, count=100, type=SEARCH, timeout=10):
 
                 s = result.description
                 
@@ -315,12 +352,17 @@ class BingExtractor:
 
                 print "Document is %s" % s
                 
-                lang = LangDetect()
+                langDetect = LangDetect()
+                lang = langDetect.lang_detect(s)
+                                
+                print "Document (and Language) is %s, Lang = %s" % (s, lang)
 
-                if (lang.lang_detect(s)):
+                if ('en' in lang):
                     model = NaiveBayes()
                     classifier = model.buildModel()
                     label = model.classify(s, classifier)
+                    
+                    id = str(hash(label + s)) 
                     
                     print "Label of tweet is %s" % label
                     if (label =='positive'):
@@ -328,32 +370,54 @@ class BingExtractor:
                         bingdoc.document = s
                         bingdoc.label = label
                         bingdoc.save()
-                        print 'the tweet is positive, storing in database'
+                        
+                        diseasetype = DiseaseType()
+                        diseases = diseasetype.typedetect(s)
+ 
+                        if diseases:
+                            if (len(diseases) > 1):
+                                googledoc.disease_type = ','.join(diseases)
+                            else:
+                                googledoc.disease_type = diseases[0]
+                       
+                        print 'The document is positive, storing in database'
 
-                    geolocation = LocationDetect()
-                    country = geolocation.extractLocation(s)
-
-                    if (country and ('positive' in label)):
-                        print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
-                        lat = "%.5f" % geolocation.detectLocation(country)[0]
-                        lng = "%.5f" % geolocation.detectLocation(country)[1]
-                        print (lat, lng)
-
-                        locationtype = LocationType.get_all_locationtypes()[0]
-                        location = Location()
-                        location.name = country
-                        location.latitude = lat
-                        location.longitude = lng
-                        location.level = 1
-                        location.locationtype = locationtype
-                        location.save()
-        
-                    id = str(hash(label + s))               
+                        geolocation = LocationDetect()
+                        country = geolocation.extractLocation(s)
                     
-                    if len(bing_search_table) == 0 or id not in index:
-                        bing_search_table.append([id, label, s, result.date])
-                        index[id] = True
-        bing_search_table.save("corpora/bing/bing_search_data.csv")
-        
+                        if (country):
+                            print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
+                            lat = "%.5f" % geolocation.detectLocation(country)[0]
+                            lng = "%.5f" % geolocation.detectLocation(country)[1]
+                            print (lat, lng)
+
+                            locationtype = LocationType.get_all_locationtypes()[0]
+                            location = Location()
+                            location.name = country
+                            location.latitude = lat
+                            location.longitude = lng
+                            location.level = 1
+                            location.locationtype = locationtype
+                            location.save()
+                            bingdoc.location = location
+                            bingdoc.location_string = location.name                            
+                        
+                        bingdoc.save()
+                                   
+                        if len(bing_predict_table) == 0 or id not in index_pred:
+                            bing_predict_table.append([id, label, s, result.date])
+                            index_pred[id] = True
+                 
+                    else:
+                        print 'the document is negative, storing in tweet corpus'
+
+                        if len(bing_corpus_table) == 0 or id not in index_corp:
+                            bing_corpus_table.append([id, s, label, result.date])
+                            index_corp[id] = True
+
+            bing_predict_table.save("predictions/NB/nb_bing.csv")
+            bing_corpus_table.save("corpora/google/bing_corpus_data.csv")
+
         print
-        print len(bing_search_table), "results."
+        print len(bing_corpus_table), "results from corpus table."
+        print len(bing_predict_table), "results from predictions table."

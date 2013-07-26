@@ -48,11 +48,12 @@ class Tweet(models.Model):
     owner = models.CharField(max_length=20)
     label = models.CharField(max_length=20)
     usage = models.CharField(max_length=20)
-    source = models.CharField(max_length=20)
+    disease_type = models.CharField(max_length=20)
     urlentity = models.CharField(max_length=20)
     hashtagentity = models.CharField(max_length=20)
     tweet_time = models.DateTimeField(db_index=True, default=datetime.now)
     location= models.ForeignKey(Location, null=True, blank=True)
+    location_string = models.CharField(max_length=20)
     
     def __unicode__(self):
         return self.text
@@ -69,7 +70,7 @@ class Tweet(models.Model):
 
     @staticmethod
     def aggregate_by_day():
-    	days = 3
+    	days = 7
     	data = []
     	
     	for i in range(days):
@@ -97,8 +98,10 @@ class GoogleDocument(models.Model):
     document = models.CharField(max_length=200)
     owner = models.CharField(max_length=20)
     label = models.CharField(max_length=20)
+    disease_type = models.CharField(max_length=20)
     search_time = models.DateTimeField(db_index=True, default=datetime.now)
     location= models.ForeignKey(Location, null=True, blank=True)
+    location_string = models.CharField(max_length=20)
     
     def __unicode__(self):
         return self.document
@@ -115,7 +118,7 @@ class GoogleDocument(models.Model):
 
     @staticmethod
     def aggregate_by_day():
-        days = 3
+        days = 7
         data = []
         
         for i in range(days):
@@ -143,8 +146,10 @@ class BingDocument(models.Model):
     document = models.CharField(max_length=200)
     owner = models.CharField(max_length=20)
     label = models.CharField(max_length=20)
+    disease_type = models.CharField(max_length=20)
     search_time = models.DateTimeField(db_index=True, default=datetime.now)
     location= models.ForeignKey(Location, null=True, blank=True)
+    location_string = models.CharField(max_length=20)
     
     def __unicode__(self):
         return self.document
@@ -161,7 +166,7 @@ class BingDocument(models.Model):
 
     @staticmethod
     def aggregate_by_day():
-        days = 3
+        days = 7
         data = []
         
         for i in range(days):
@@ -184,7 +189,7 @@ class BingDocument(models.Model):
        pass 
 
 
-class Report(models.Model):
+class ReportType(models.Model):
     """This class models report types; Maps, Trend Charts, Visualization and Alerts graphs."""
     report = models.CharField(max_length=20)
     

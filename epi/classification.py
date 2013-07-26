@@ -7,7 +7,7 @@ from epidetect import Evaluator
 import nltk
 from epi.models import Tweet, Location, LocationType
 from pattern.en     import tag, predicative
-from pattern.vector import SVM, KNN, NB, count, shuffled, Classifier
+from pattern.vector import SVM, KNN, NaiveBayes, count, shuffled, Classifier
 from pattern.db  import Datasheet, pprint
 
 

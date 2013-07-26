@@ -8,6 +8,10 @@ from geopy import geocoders
 from nltk import wordpunct_tokenize
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
+from mstranslator import MSTranslatorAccessKey
+from mstranslator import MSTranslator
+from pretests.gtranslate import *
+
 
 class Evaluator:
     ''' This class holds method stubs and some utilities for 
@@ -65,12 +69,14 @@ class LocationDetect:
         try: 
             tokenizer = RegexpTokenizer(r'\w+|[^\w\s]+')
 
-            countries = ['Turkey', 'Iran', 'Russia', 'Pakistan', 'UAE', 'Saudi Arabia', 'Sudan', 'Somalia', 'China', 'Arabia', 'Saudi']
+            countries = ['Turkey', 'Iran', 'Russia', 'Pakistan', 'UAE', 'Saudi Arabia', 'Sudan', 'Somalia', 'China', 'Saudi']
             tokens = tokenizer.tokenize(args[0])
 
             for word in tokens:
                 if (word in countries):
                     print "%s is extracted" % word
+                    if ('Saudi' in word):
+                        word = word+" Arabia"
                     return word
         except UnicodeEncodeError:
             print "Unable to encode some character(s) in tweet"    
@@ -84,11 +90,8 @@ class LangDetect:
     def lang_detect(self, document):
         ratios = self.lang_likelihood(document)
         most_rated_language = max(ratios, key=ratios.get)
-        
-        if ('en' in most_rated_language):
-            return True
-
-        return False
+       
+        return most_rated_language
     
     def lang_likelihood(self, document):
         languages_likelihood = {}
@@ -105,3 +108,47 @@ class LangDetect:
 
         return languages_likelihood
 
+
+class LangTranslate:
+    ''' This class translates document from given language to english for classification.
+    '''
+    def translate(self, *args):
+        translator = GoogleTransator()
+        
+        print "Translation of: %s is: %s" % (args[0], translator.translate(text=args[0], target='en', source=args[1]))
+        
+
+class DiseaseType:
+    ''' This class detects the types of diseases contained in document.
+        Due to the nature of the classifier deployed, the type of disease
+        detected by the model can not be pre-determined. So a separate 
+        algorithm to ascertain the diseases with which a report is 
+        associated is necessary
+    ''' 
+
+    def typedetect(self, *args):
+
+        tokenizer = RegexpTokenizer(r'\w+|[^\w\s]+')
+
+        with open('epidetect.properties') as f:
+            for line in f:
+                if 'TrackedDiseases' in line:
+                    diseases = line      
+  
+        #diseases = tokenizer.tokenize(diseases)
+        
+        diseases = ['flu', 'swine flu', 'west nile', 'tuberculosis', 'avian influenza', 'influenza', 'measles', 'intestinal', 'dengue', 'respiratory', \
+        'albinism', 'coronavirus', 'polio', 'legionella', 'gastroenteric', 'h1n1', 'hepatitis', 'ebola', 'hendra', 'influenzavirus', 'meningitis', 'h7n9', 'sars', 'hiv', 'aids', 'polio']
+
+        document = tokenizer.tokenize(args[0])
+        
+        document = [word.lower() for word in document]
+        diseases = [disease_word.lower() for disease_word in diseases]
+
+        detected_diseases = []
+
+        for disease in diseases:
+            if disease in document:
+                detected_diseases.append(disease)
+
+        return detected_diseases

@@ -62,11 +62,18 @@ class TweetExtractor:
         # haven not previously been encountered. An ID as index on the first column allows for checking if an ID already exists.
         # The index becomes important once more and more rows are added to the table (speed). 
         # The CSV is loaded into an SQLite database at some point.
-            stream_table = Datasheet.load("tweets_stream_data.csv")
-            index = dict.fromkeys(stream_table.columns[0], True)
+            
+            stream_corpus_table = Datasheet.load("corpora/twitter/tweets_stream_data.csv")
+            index_corp = dict.fromkeys(stream_corpus_table [0], True)
+
+            stream_predict_table = Datasheet.load("predictions/NB/nb_twitter.csv")
+            index_pred = dict.fromkeys(stream_predict_table.columns[0], True)
+
         except:
-            stream_table = Datasheet()
-            index = {}
+            stream_predict_table = Datasheet()
+            index_pred = {}
+            stream_corpus_table = Datasheet()
+            index_corp = {}
 
         #twitter_api = Twitter(license=None,language="en")
 
@@ -80,56 +87,78 @@ class TweetExtractor:
             # The stream is a list of buffered tweets so far,
             # with the latest tweet at the end of the list.
             for twt in reversed(stream_api):
-                print "Tweet is %s" % twt.text
+                                
+                langDetect = LangDetect()
+                lang = langDetect.lang_detect(twt.text)
                 
-                lang = LangDetect()
+                print "Tweet is %s, Lang = %s" % (twt.text, lang)
 
-                if (lang.lang_detect(twt.text)):
+                if ('en' in lang):
                     model = NaiveBayes()
                     classifier = model.buildModel()
                     label = model.classify(twt.text, classifier)
+
                     
+                    print "Label of tweet is %s" % label
+                    
+                    id = str(hash(twt.author + twt.text))
+
                     if (label =='positive'):
                         tweet = Tweet()
                         tweet.text = twt.text
                         tweet.label = label
                         tweet.owner = twt.author
+                        
+                        diseasetype = DiseaseType()
+                        diseases = diseasetype.typedetect(twt.text)
+
+                        geolocation = LocationDetect()
+                        country = geolocation.extractLocation(twt.text)
+
+                        if (country):
+                            print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
+                            lat = "%.5f" % geolocation.detectLocation(country)[0]
+                            lng = "%.5f" % geolocation.detectLocation(country)[1]
+                            print (lat, lng)
+
+                            locationtype = LocationType.get_all_locationtypes()[0]
+                            location = Location()
+                            location.name = country
+                            location.latitude = lat
+                            location.longitude = lng
+                            location.level = 1
+                            location.locationtype = locationtype
+                            location.save()
+                            tweet.location = location
+
+                        print 'the tweet is %s, and storing in tweet database' % label
+                        print 'the tweet categories are', diseases
+
                         tweet.save()
-                        print 'the tweet is positive, storing in tweet database'
+                        
+                        if len(stream_predict_table) == 0 or id not in index_pred:
+                            stream_predict_table.append([id, twt.author, twt.text, label, twt.date])
+                            index_pred[id] = True
 
-                    print "Label of tweet is %s" % label
-                    
-                    geolocation = LocationDetect()
-                    country = geolocation.extractLocation(twt.text)
+                    else:
+                        print 'the tweet is positive, storing in tweet corpus'
 
-                    if (country and ('positive' in label)):
-                        print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
-                        lat = "%.5f" % geolocation.detectLocation(country)[0]
-                        lng = "%.5f" % geolocation.detectLocation(country)[1]
-                        print (lat, lng)
+                        if len(stream_corpus_table) == 0 or id not in index_corp:
+                            stream_corpus_table.append([id, twt.author, twt.text, label, twt.date])
+                            index_corp[id] = True
 
-                        locationtype = LocationType.get_all_locationtypes()[0]
-                        location = Location()
-                        location.name = country
-                        location.latitude = lat
-                        location.longitude = lng
-                        location.level = 1
-                        location.locationtype = locationtype
-                        location.save()
-
-                id = str(hash(twt.author + twt.text))
-
-                if len(stream_table) == 0 or id not in index:
-                    stream_table.append([id, twt.author, twt.text, twt.url, hashtags(twt.text), twt.date, twt.language])
-                    index[id] = True
 
             # Clear the buffer every so often.
             stream_api.clear()
+
             # Wait awhile between polls.
             #time.sleep(1)   
-            stream_table.save("tweets_stream_data.csv")
 
-        print "Total results:", len(stream_table)
+            stream_predict_table.save("predictions/NB/nb_twitter.csv")
+            stream_corpus_table.save("corpora/twitter/tweets_stream_data.csv")
+
+        print "Total corpus results:", len(stream_corpus_table)
+        print "Total predicted results:", len(stream_predict_table)
         print
 
         

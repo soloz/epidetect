@@ -8,8 +8,6 @@ from geopy import geocoders
 from nltk import wordpunct_tokenize
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
-from mstranslator import MSTranslatorAccessKey
-from mstranslator import MSTranslator
 from pretests.gtranslate import *
 
 

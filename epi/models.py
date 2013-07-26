@@ -94,6 +94,9 @@ class Tweet(models.Model):
     def aggregate_by_month():
 	   pass 
 
+    @staticmethod
+    def aggregate_geocodes():
+    	return Tweet.objects.all()
 
 class GoogleDocument(models.Model):
     """A Google document represents a search result from google reporting outbreak."""
@@ -127,7 +130,7 @@ class GoogleDocument(models.Model):
         for i in range(days):
             startdate = datetime.today() + timedelta(days=-(days-i))
             enddate = datetime.today() + timedelta(days=-(days-i-1))
-            daily_documents = GoogleDocument.objects.filter(tweet_time__range = [startdate,enddate])
+            daily_documents = GoogleDocument.objects.filter(search_time__range = [startdate,enddate])
             current_day = startdate + timedelta(days=i)
             utc_seconds = time.mktime(current_day.timetuple())
             daily_data = [utc_seconds,len(daily_documents)]
@@ -176,7 +179,7 @@ class BingDocument(models.Model):
         for i in range(days):
             startdate = datetime.today() + timedelta(days=-(days-i))
             enddate = datetime.today() + timedelta(days=-(days-i-1))
-            daily_documents = BingDocument.objects.filter(tweet_time__range = [startdate,enddate])
+            daily_documents = BingDocument.objects.filter(search_time__range = [startdate,enddate])
             current_day = startdate + timedelta(days=i)
             utc_seconds = time.mktime(current_day.timetuple())
             daily_data = [utc_seconds,len(daily_documents)]

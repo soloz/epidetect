@@ -145,25 +145,20 @@
 
       </div>
 
-
 <script type="text/javascript">
-   var mydata = {{ data|safe }};
+    var mydata = new Array();
+    
+    {% for databundle in data %}
+            mydata [{{ forloop.counter }}] = {{databundle|safe}}
+    {% endfor %}
+     
 </script>
 
-   <p id="chart" style="width:600px; height:400px;"></p>
+<hr>
 
-	 {% for date, val in data %}
-		   {{date}}
-		   {{val}}
-	 {% endfor %}
-
-  <hr>
-
-
-
-      <footer>
-        <p>&copy; University of St Andrews 2013</p>
-      </footer>
+  <footer>
+    <p>&copy; University of St Andrews 2013</p>
+  </footer>
 
     </div> <!-- /container -->
 

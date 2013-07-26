@@ -10,6 +10,7 @@ from time import time as taim
 import json
 from django.utils import simplejson
 
+
 class IndexView(generic.ListView):
     template_name = 'epiweb/index.html'
     context_object_name = 'data'
@@ -19,13 +20,14 @@ class IndexView(generic.ListView):
         Return the last five published polls (not including those set to be
         published in the future).
         """
-        data = Tweet.aggregate_by_day()
-        jsondata = json.dumps(data)
-
-        mydict = [1,2,3]   
-        jsdata  = simplejson.dumps(data)
-
-        return jsondata
+        tweet_data = Tweet.aggregate_by_day()
+        google_data = GoogleDocument.aggregate_by_day()
+        bing_data = BingDocument.aggregate_by_day()
+       
+        trends_dataset = [json.dumps(tweet_data), json.dumps(google_data), json.dumps(bing_data) ]
+         
+        return trends_dataset
+        
 
 class DetailView(generic.DetailView):
     model = Tweet

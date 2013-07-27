@@ -28,6 +28,17 @@ class IndexView(generic.ListView):
          
         return trends_dataset
         
+class ImprovedIndexView(generic.ListView):
+    template_name = 'epiweb/epidetect.html'
+    context_object_name = 'data'
+
+    def get_queryset(self):
+        """
+        Improved interface for Epidetect.
+        """
+        sample_data = [1,2]
+
+        return sample_data
 
 class DetailView(generic.DetailView):
     model = Tweet

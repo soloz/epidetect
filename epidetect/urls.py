@@ -14,6 +14,7 @@ urlpatterns = patterns('',
 
     url(r'^epiweb/', include('epiweb.urls', namespace="epiweb")),
     url(r'^epiweb/prototype', include('epiweb.urls', namespace="epiweb")),
+    url(r'^epiweb/improved', include('epiweb.urls', namespace="epiweb")),
     url(r'^epiweb/documentclass', include('epiweb.urls', namespace="epiweb")),
     url(r'^admin/', include(admin.site.urls)),
 )

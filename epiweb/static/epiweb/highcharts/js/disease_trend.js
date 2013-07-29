@@ -5,21 +5,21 @@
         bing_data = new Array()
 
         //Extract Twitter data
-        for (var i=0;i<mydata[1].length;i++)
+        for (var i=0;i<trendsdata[1].length;i++)
         {
-            twitter_data.push([mydata[1][i][0]*1000, mydata[1][i][1]]) 
+            twitter_data.push([trendsdata[1][i][0]*1000, trendsdata[1][i][1]]) 
         }
         
         //Extract Google data
-        for (var i=0;i<mydata[2].length;i++)
+        for (var i=0;i<trendsdata[2].length;i++)
         {
-            google_data.push([mydata[2][i][0]*1000, mydata[2][i][1]]) 
+            google_data.push([trendsdata[2][i][0]*1000, trendsdata[2][i][1]]) 
         }
         
         //Extract Bing data
-        for (var i=0;i<mydata[3].length;i++)
+        for (var i=0;i<trendsdata[3].length;i++)
         {
-            bing_data.push([mydata[3][i][0]*1000, mydata[3][i][1]]) 
+            bing_data.push([trendsdata[3][i][0]*1000, trendsdata[3][i][1]]) 
         }
         
         

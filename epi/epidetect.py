@@ -5,10 +5,12 @@ from pattern.web import SEARCH
 from pattern.web import Google, Twitter, Facebook, Bing
 from pygeocoder import Geocoder
 from geopy import geocoders   
+from geopy.geocoders import *
 from nltk import wordpunct_tokenize
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 from pretests.gtranslate import *
+import tweepy
 
 
 class Evaluator:
@@ -56,9 +58,30 @@ class LocationDetect:
     def detectLocation(self, *args, **kwargs):
         ''' Perform location detection from tweets.
         '''
-        g = geocoders.GoogleV3()
-        place, (lat, lng) = g.geocode(args[0])
-        return (lat, lng)
+        
+        try:
+            g = geocoders.GoogleV3()
+            place, (lat, lng) = g.geocode(args[0], exactly_one = False)[0]
+        except:
+            #print "In detectLocation: No geocode for Location specified: %s" % args[0]
+            return None
+                
+        return (lat, lng, place) or None
+
+    
+    def getTweeterLocation(self, *args, **kwargs):
+        ''' Perform location detection from tweets.
+        '''
+        auth = tweepy.OAuthHandler("KVuUoRpXhSToTasXX3bB3A", "7ckvovFEbJkNGwl1Lj7txH0dJp5UiCLTJDEYoCl8U")
+        auth.set_access_token("14702590-KRTpR5VYzZMxblqtKSW7x1MvaPA4WdMj3v6crmVY", "Ky6f6TN6ad3SgUeL17kH9dg3zQPs21NQoSTGnMlYw")
+        
+        twitterapi = tweepy.API(auth)
+        user = twitterapi.get_user(args[0])
+           
+        if user.location:
+            return user.location
+        else:
+            return None
 
     def extractLocation(self, *args, **kwargs):
         '''Performs extraction of Location information from Documents

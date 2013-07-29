@@ -31,14 +31,33 @@ class IndexView(generic.ListView):
 class ImprovedIndexView(generic.ListView):
     template_name = 'epiweb/epidetect.html'
     context_object_name = 'data'
-
+    
     def get_queryset(self):
         """
-        Improved interface for Epidetect.
+        Return the last five published polls (not including those set to be
+        published in the future).
         """
-        sample_data = [1,2]
-
-        return sample_data
+        
+        dss = self.kwargs['disease']
+        
+        
+        tweet_data = Tweet.get_trends_data(disease=dss)
+        google_data = GoogleDocument.aggregate_by_day()
+        bing_data = BingDocument.aggregate_by_day()
+       
+        trends_dataset = [json.dumps(tweet_data), json.dumps(google_data), json.dumps(bing_data) ]
+        
+        bars = []
+        
+        bar1 = [[70.5, 80.2], "San Fransisco, LA", 4, "http://whatever"]
+        bar2 = [[70.5, 88.2], "San Bruno, LA", 5, "http://whatever2"]
+        
+        points = Tweet.get_map_data(disease=dss)
+        
+        print "Disease is %s" % dss
+                   
+        return {'trendsdata':trends_dataset,  'mapsdata': points,}
+        
 
 class DetailView(generic.DetailView):
     model = Tweet

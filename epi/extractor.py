@@ -9,8 +9,10 @@ from pattern.en import parsetree
 from classification import *
 from epi.epidetect import *
 from epi.models import *
+import pattern.web as webpatterns
 
 import json, time
+
 
 class TweetExtractor:
     ''' This class will extract tweets from Twitter via the Twitter search and streaming APIs. 
@@ -98,7 +100,10 @@ class TweetExtractor:
                     classifier = model.buildModel()
                     label = model.classify(twt.text, classifier)
 
+                    geolocation = LocationDetect()
+                    
                     print "Label of tweet is %s" % label
+                    print "Tweeter Location is", geolocation.getTweeterLocation(twt.author)
                     
                     id = str(hash(twt.author + twt.text))
 
@@ -111,8 +116,8 @@ class TweetExtractor:
                         diseasetype = DiseaseType()
                         diseases = diseasetype.typedetect(twt.text)
 
-                        geolocation = LocationDetect()
-                        country = geolocation.extractLocation(twt.text)
+                        #country = geolocation.extractLocation(twt.text)
+                        place = geolocation.getTweeterLocation(twt.author)
                         
                         if diseases:
                             if (len(diseases) > 1):
@@ -120,22 +125,27 @@ class TweetExtractor:
                             else:
                                 tweet.disease_type = diseases[0]
                                 
-                        if (country):
-                            print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
-                            lat = "%.5f" % geolocation.detectLocation(country)[0]
-                            lng = "%.5f" % geolocation.detectLocation(country)[1]
-                            print (lat, lng)
-
-                            locationtype = LocationType.get_all_locationtypes()[0]
-                            location = Location()
-                            location.name = country
-                            location.latitude = lat
-                            location.longitude = lng
-                            location.level = 1
-                            location.locationtype = locationtype
-                            location.save()
-                            tweet.location = location
-                            tweet.location_string = location.name
+                        if (place):
+                            geolocationInfo = geolocation.detectLocation(place)
+                            
+                            if geolocationInfo:
+                               
+                                lat = "%.5f" % geolocationInfo[0]
+                                lng = "%.5f" % geolocationInfo[1]
+                                place = "%s" % geolocationInfo[2]
+                                
+                                print "Geolocation of %s is (%s, %s). Storing location information for document" % (place, lng, lat)
+                                
+                                locationtype = LocationType.get_all_locationtypes()[0]
+                                location = Location()
+                                location.name = place
+                                location.latitude = lat
+                                location.longitude = lng
+                                location.level = 1
+                                location.locationtype = locationtype
+                                location.save()
+                                tweet.location = location
+                                tweet.location_string = str(location.name)
                        
                         print 'the tweet is %s, and storing in tweet database' % label
                         print 'the tweet categories are ', tweet.disease_type, diseases
@@ -172,13 +182,13 @@ class GoogleExtractor:
     ''' This class will extract search documents from Google via the Google search APIs. 
     The documents would be stored in a CSV file for model building and subsequently into an SQL database '''
 
-    global engine 
-    engine = Google(license=None, language="en")
-    
-    global q
-    q= "coronavirus"
 
     def googleSearch(self):
+    
+        engine = webpatterns.Google(license=None, language="en")
+        
+        q= "coronavirus"
+        
         try: 
         # We extract and store Google documents in a Datasheet that can be saved as a CSV file.
         # The first column holds unique ID for each document. The CSV file is grown by adding new documents that
@@ -210,7 +220,7 @@ class GoogleExtractor:
 
         p = "DISEASE" # Search pattern.
 
-        for i in range(1,2):
+        for i in range(1,10):
             for result in engine.search(q, start=i, count=100, type=SEARCH):
                 print plaintext(result.text) # plaintext() removes HTML formatting.
                 print result.url

@@ -12,7 +12,7 @@
 
     <!-- Loading Flat UI -->
     <link rel="stylesheet" type="text/css" href="{% static 'epiweb/flatui/css/flat-ui.css' %}" />
-
+    
     <!-- Loading Logo -->
     <link rel="shortcut icon" href="{% static 'epiweb/flatui/images/favicon.ico' %}" />    
 
@@ -20,7 +20,44 @@
     <!--[if lt IE 9]>
       <script src="js/html5shiv.js"></script>
     <![endif]-->
+    
+    <!-- Loading Other styles for Maps, Tweetclouds, and charts -->
+    <link rel="stylesheet" type="text/css" href="{% static 'epiweb/mapbox/css/mapbox.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'epiweb/d3/css/style.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'epiweb/d3/css/style2.css' %}" />
+    
+    
+<style type="text/css"> <!-- Extra styles to make our map look good -->
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+    </style>
+    <style>
+    #map {
+      width:600px;
+      height:400px;
+    }
+  </style>
+
+<style>
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+
+</style>
+
   </head>
+  
+  {% block content %}
+  
   <body>
 
       <div class="row demo-row">
@@ -86,23 +123,142 @@
               </div>
             </div>
           </div>
+          
+    <div class="row"> <!-- / first (banner) row -->
+            
+            <div class="span1">
+            
+            </div>
+             
+        <div class="span12">
+            <h4 class="demo-logo">
+              Epidetect
+              <small>An Epidemic Intelligence Framework</small>
+            </h4>
+        </div>
+      
+    </div> <!-- / first (banner) row -->
 
-    <div class="container">
-        <h4 class="demo-logo">
-          Epidetect
-          <small>An Epidemic Intelligence Framework</small>
-        </h4>
+   <div class="row"> <!-- / second row -->
+            
+        <div class="span1"> <!-- / Dummy (Zeroth) Column -->
+        </div> <!-- / Dummy (Zeroth) Column -->
+            
+        <div class="span10">
+        
+          <div class="demo-text-box prl">
+            <h3 class="demo-panel-title">Charts & Trends</h3>
+            Charts and Trends of an highlighted disease over time and across locations. Trend analysis are carried out and plotted on these charts using Highcharts APIs.
+            <div id="container2" style="min-width: 400px; height: 400px; margin: 0 auto"></div>
+            <p>Charts can be exported to PDFs, LaTeX or Movie files. Two trends and charts types are possible. 1. Positive Cases - Charts displaying actual outbreak trends, and 2. 
+            Negative Cases - Charts displaying rumors or disease mentions as a result of activities such as research, teaching or conferences. The current research or conferences are displayed as tool tip on the trends.</p>
+             <p><a class="btn" href="#">View details &raquo;</a></p>
+          </div>
+          
+        </div> <!-- /Charts and Trends box (First Column) -->
+        
+       <div class="span10 demo-text-box">
+          <div class="demo-text-box prl">
+          
+            <h3 class="demo-panel-title">Maps (Disease Location)</h3>
+            <p>A display of a map showing the locations of outbreak of selected or highlighted disease. These locations are marked yellow, 
+            green, or red depending on the severity of the diseases.</p>
+          </div>
+           <div id='map'></div>
+          
+            <p> The severity levels are displayed in the <b>Alerts</b> section of this 
+            dashboard. There are three severith levels defined depending upon the frequecy of mention of the diseases and the coverage obtained by the social media counts. 
+            May is drawn using Mapbox.com APIs.</p>
+            
+            <p><a class="btn" href="#">View details &raquo;</a></p>
+            
+        </div> <!-- /Maps box (Second Column)-->
+        
+        
+        <div class="span3">
+          <div class="demo-text-box prl">
+            <h3 class="demo-panel-title">Tweets</h3>
+            Scrolling of Tweets reporting outbreak.
+          </div>
+          
+        </div> <!-- /Others (Third Column) -->
+        
+        
+    </div> <!-- / second row -->
 
+     <div class="row"> <!-- / Third row -->
+            
+        <div class="span1"> <!-- / Dummy (Zeroth) Column -->
+        </div> <!-- / Dummy (Zeroth) Column -->
+        
+        <div class="span10 demo-text-box "> <!-- /Alerts (First Column) -->
+          <div class="demo-text-box prl">
+            <h3 class="demo-panel-title">Alerts & Warnings</h3>
+            <p>A bar chart of alerts on disease outbreak is presented along with the severity levels. Thumbnails for the alerts are 
+            displayed here and links to the main chart upon a mouse click. Charts are defined for the six continents. </p>
+          </div>
+          <div id="container" style="width:100%; height:400px;"></div>
+          
+           <p>Three severity levels are defined for the alerts, namely; Low - for low risk diseases; Medium - for medium impact; and High - for diseases 
+            with high impact and spread. Corresponding alerts bars showing the outbreak with highest severity levels, are displayed along 
+            with the bar charts. A scrolling warning bars (red, green, yellow) are also displayed here.</p>
+            <p><a class="btn" href="#">View details &raquo;</a></p>
+            
+        </div> <!-- /Alerts (First Column) -->
+         
+         
+       <div class="span10 demo-text-box">  <!-- Visualizations (Second Column)-->
+          <div class="demo-text-box prl">
+            <h3 class="demo-panel-title">Visualizations</h3>
+            <p>Streams of tweets reporting outbreaks are displayed here. These tweets are being mined by the system in order 
+            to detect an outbreak in the locations. Tweets are marked as blue or red, indicating negative or positive tweets 
+            report respectively</p>
+          </div>
+                    <iframe src="http://bl.ocks.org/mbostock/raw/4062045/d89ba00bbdcc7695b63696902f0f7e95cbe3a679/" marginwidth="0" marginheight="0" scrolling="no" style="width:600px; height:400px;"></iframe>
+          <p><a class="btn" href="#">View details &raquo;</a></p>
+          
+        </div>  <!-- Visualizations (Second Column)-->
+         
+        <div class="span3">  <!-- /Social Media (Third Column) -->
+          <h3 class="demo-panel-title">Social Media</h3>
+          <div class="share mrl">
+            <ul>
+              <li>
+                <label class="share-label" for="share-toggle2">Google</label>
+                <input type="checkbox" data-toggle="switch" />
+              </li>
+              <li>
+                <label class="share-label" for="share-toggle4">Twitter</label>
+                <input type="checkbox" checked="" data-toggle="switch" />
+              </li>
+              <li>
+                <label class="share-label" for="share-toggle6">Bing</label>
+                <input type="checkbox" data-toggle="switch" />
+              </li>
+            </ul>
+            <a href="#" class="btn btn-primary btn-block btn-large">Update Server</a>
+          </div> 
+        
+     </div> <!-- /Social Media (Third Column) -->
+    </div> <!-- / Third row -->
+
+     <div class="row"> <!-- / Forth (Dummy) row -->
+      
+         <div class="span1"> <!-- / Dummy (Zeroth) Column -->
+        </div> <!-- / Dummy (Zeroth) Column -->
+        
     </div>
-
+    
     <footer>
-      <div class="container">
         <div class="row">
+            <div class="span1">
+            </div>
+        
           <div class="span7">
             <h3 class="footer-title">Project Description</h3>
-            <p>EpiDetect is a software tool that supports early detection of infectious<br/>
-              disease outbreak. Outbreak knowledge discovered by mining texts from<br/>
-              the Social Media, with Twitter, Facebook (non-profile pages), and </br>
+            <p>EpiDetect is a software tool that supports early detection of infectious
+              disease outbreak. Outbreak knowledge discovered by mining texts from
+              the Social Media, with Twitter, Facebook (non-profile pages), and 
               Google Search Engine being the primary data sources.</br></br>
               Available at: <a href="http://www.epidetect.com" target="">epidetect.com/outbreaks</a>
             </p>
@@ -116,7 +272,10 @@
               <img src="{% static 'epiweb/flatui/images/footer/logo.png' %}" alt="Designmodo.com" />
             </a>
           </div> <!-- /span8 -->
-
+          
+          <div class="span11">
+          </div>
+          
           <div class="span5">
             <div class="footer-banner">
               <h3 class="footer-title">Application Features</h3>
@@ -131,11 +290,57 @@
             </div>
           </div>
         </div>
-      </div>
+
     </footer>
     
+    
+<!-- manually inputed javascripts =============================-->
+<script type="text/javascript">
+
+    var trendsdata = new Array();
+     {% for databundle in data.trendsdata %}
+            trendsdata [{{ forloop.counter }}] = {{databundle|safe}}
+    {% endfor %}  
+    
+    var mapsdata = new Array();
+    {% for databundle in data.mapsdata %}
+            mapsdata [{{ forloop.counter }}] = {{databundle|safe}}
+    {% endfor %}  
+    
+</script>
+Data transfered
+{{data.mapsdata2}}
+
     <!-- Load JS here for greater good =============================-->
-    <script src="{% static 'epiweb/flatui/js/jquery-1.8.3.min.js' %}"></script>
+    <script src="{% static 'epiweb/mapbox/js/mapbox.js' %}"></script>
+    <script src="{% static 'epiweb/mapbox/js/leaflet-knn.min.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/jquery.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-transition.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-alert.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-modal.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-dropdown.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-scrollspy.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-tab.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-tooltip.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-popover.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-button.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-collapse.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-carousel.js' %}"></script>
+    <script src="{% static 'epiweb/bootstrap_ext/js/bootstrap-typeahead.js' %}"></script>
+    <script src="{% static 'epiweb/highcharts/js/jquery.min.js' %}"></script>
+    <script src="{% static 'epiweb/highcharts/js/highcharts.js' %}"></script>
+    <script src="{% static 'epiweb/mapbox/js/mapbox.js' %}"></script>
+    <script src="{% static 'epiweb/mapbox/js/leaflet-knn.min.js' %}"></script>
+    <script src="{% static 'epiweb/mapbox/js/samplemap2.js' %}"></script>
+    <script src="{% static 'epiweb/highcharts/js/exporting.js' %}"></script>
+    <script src="{% static 'epiweb/highcharts/js/trend.js' %}"></script>
+    <script src="{% static 'epiweb/highcharts/js/disease_trend.js' %}"></script>
+    <script src="{% static 'epiweb/d3/js/d3.v3.min.js' %}"></script>
+    <script src="{% static 'epiweb/d3/js/d3.v2.min.js' %}"></script>
+    <script src="{% static 'epiweb/d3/js/highlight.min.js' %}"></script>
+    <script src="{% static 'epiweb/d3/js/visualizer2.js' %}"></script>
+        
+    <!--script src="{% static 'epiweb/flatui/js/jquery-1.8.3.min.js' %}"></script>
     <script src="{% static 'epiweb/flatui/js/jquery-ui-1.10.3.custom.min.js' %}"></script>
     <script src="{% static 'epiweb/flatui/js/jquery.ui.touch-punch.min.js' %}"></script>
     <script src="{% static 'epiweb/flatui/js/bootstrap.min.js' %}"></script>
@@ -147,7 +352,10 @@
     <script src="{% static 'epiweb/flatui/js/jquery.placeholder.js' %}"></script>
     <script src="{% static 'epiweb/flatui/js/query.stacktable.js' %}"></script>
     <script src="{% static 'http://vjs.zencdn.net/c/video.js' %}"></script>
-    <script src="{% static 'epiweb/flatui/js/application.js' %}"></script>
+    <script src="{% static 'epiweb/flatui/js/application.js' %}"></script-->
+
 
   </body>
+  {% endblock %}
+  
 </html>

@@ -1,6 +1,7 @@
 from django.db import models
 from datetime import datetime, timedelta
 import time
+from epi.epidetect import LocationDetect
 
 # Create your models here.
 
@@ -71,14 +72,14 @@ class Tweet(models.Model):
         return Tweet.objects.all()
 
     @staticmethod
-    def aggregate_by_day():
+    def get_trends_data(disease="all"):
     	days = 7
     	data = []
     	
     	for i in range(days):
     	    startdate = datetime.today() + timedelta(days=-(days-i))
     	    enddate = datetime.today() + timedelta(days=-(days-i-1))
-    	    daily_tweets = Tweet.objects.filter(tweet_time__range = [startdate,enddate])
+    	    daily_tweets = Tweet.objects.filter(tweet_time__range = [startdate,enddate], disease_type__contains=disease)
     	    current_day = startdate + timedelta(days=i)
             utc_seconds = time.mktime(current_day.timetuple())
             daily_data = [utc_seconds,len(daily_tweets)]
@@ -87,16 +88,29 @@ class Tweet(models.Model):
     	return data
 
     @staticmethod
-    def aggregate_by_week():
-    	pass 
+    def get_map_data(disease="all"):
+                
+        data = []
+        location = LocationDetect() 
+        
+        for tweet in Tweet.objects.filter(disease_type__contains = disease):
+       
+            if tweet.location_string:
+                
+                geolocationInfo = location.detectLocation(tweet.location_string)
+                
+                if geolocationInfo: 
+                    lat =  geolocationInfo[0]
+                    lng =  geolocationInfo[1]
+                    
+                    if tweet.disease_type:
+                        try:
+                            data.append([[lng, lat], str(tweet.location_string)])  
+                        except:
+                            print "Omitting non-Unicode characters in Location geocoding"            
 
-    @staticmethod
-    def aggregate_by_month():
-	   pass 
+        return data
 
-    @staticmethod
-    def aggregate_geocodes():
-    	return Tweet.objects.all()
 
 class GoogleDocument(models.Model):
     """A Google document represents a search result from google reporting outbreak."""

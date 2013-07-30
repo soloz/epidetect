@@ -8,7 +8,6 @@ from epi.epidetect import LocationDetect
 class LocationType(models.Model):
     name = models.CharField(max_length=100)
     
-    
     class Meta:
         verbose_name = "LocationType"
     
@@ -42,6 +41,10 @@ class Location(models.Model):
     @staticmethod
     def get_all_locations():
         return Location.objects.all()
+    
+    def __unicode__(self):
+        return self.name
+
 
 class Tweet(models.Model):
     """A Tweet represents a twitter message."""

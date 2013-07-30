@@ -20,7 +20,7 @@ class IndexView(generic.ListView):
         Return the last five published polls (not including those set to be
         published in the future).
         """
-        tweet_data = Tweet.aggregate_by_day()
+        tweet_data = Tweet.get_trends_data()
         google_data = GoogleDocument.aggregate_by_day()
         bing_data = BingDocument.aggregate_by_day()
        

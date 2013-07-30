@@ -10,7 +10,11 @@ from nltk import wordpunct_tokenize
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 from pretests.gtranslate import *
+from pattern.db  import Datasheet
+import epi.models
+
 import tweepy
+
 
 
 class Evaluator:
@@ -173,3 +177,64 @@ class DiseaseType:
                 detected_diseases.append(disease)
 
         return detected_diseases
+        
+class Utility:
+    ''' Utility class to handle issues such as database consolidation
+        and data migration.
+    ''' 
+    
+    def dumpdata(self):
+        ''' Utility method to dump data in a csv file for later upload to the
+        final database. Final database fields is found below.
+        ---------------------------------------------------------------------
+            1.) text = models.CharField(max_length=200)
+            2.) owner = models.CharField(max_length=20)
+            3.) label = models.CharField(max_length=20)
+            4.) usage = models.CharField(max_length=20)
+            5.) disease_type = models.CharField(max_length=20, null=True)
+            6.) urlentity = models.CharField(max_length=20)
+            7.) hashtagentity = models.CharField(max_length=20)
+            8.) tweet_time = models.DateTimeField(db_index=True, default=datetime.now)
+            9.) location= models.ForeignKey(Location, null=True, blank=True)
+            10.) location_string = models.CharField(max_length=20, null=True)
+            11.) from_lang = models.CharField(max_length=20)
+            12.) lat
+            13.) lng
+            14.) country
+            
+        ''' 
+        try: 
+        # We extract information from database and store in a csv
+            
+            data_dump = Datasheet.load("archive/database/datadump.csv")
+            index = dict.fromkeys(data_dump[0], True)
+
+        except:
+            data_dump = Datasheet()
+            index = {}
+        
+        for tweet in epi.models.Tweet.objects.all(): 
+            id = str(hash(tweet.owner + tweet.text))   
+            
+            if len(data_dump) == 0 or id not in index:
+                data_dump.append([id, tweet.text, tweet.owner, tweet.label, \
+                tweet.usage, '', tweet.urlentity, tweet.tweet_time,\
+                '', tweet.location, ''])
+                index[id] = True
+                
+            data_dump.save("archive/database/datadump.csv")
+        
+        
+    def loaddata(self):
+        try: 
+        # We extract information from database and store in a csv
+            
+            data_dump = Datasheet.load("archive/database/datadump.csv")
+            index = dict.fromkeys(data_dump[0], True)
+
+        except:
+            data_dump = Datasheet()
+            index = {}
+            
+            
+            

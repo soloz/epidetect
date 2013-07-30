@@ -10,6 +10,7 @@ from classification import *
 from epi.epidetect import *
 from epi.models import *
 import pattern.web as webpatterns
+from nltk.tokenize import RegexpTokenizer
 
 import json, time
 
@@ -88,6 +89,9 @@ class TweetExtractor:
             stream_api.update()
             # The stream is a list of buffered tweets so far,
             # with the latest tweet at the end of the list.
+            
+            tokenizer = RegexpTokenizer(r'\w+|[^\w\s]+')
+            
             for twt in reversed(stream_api):
                                 
                 langDetect = LangDetect()
@@ -136,13 +140,31 @@ class TweetExtractor:
                                 
                                 print "Geolocation of %s is (%s, %s). Storing location information for document" % (place, lng, lat)
                                 
-                                locationtype = LocationType.get_all_locationtypes()[0]
                                 location = Location()
                                 location.name = place
                                 location.latitude = lat
                                 location.longitude = lng
-                                location.level = 1
+                                
+                                tokens = tokenizer.tokenize(place)
+                                
+                                if len(tokens) > 1:                            
+                                    location.level = 2
+                                    locationtype = LocationType.get_all_locationtypes()[1]
+                                    
+                                    parent_location = Location()
+                                    parent_location.name = tokens[len(tokens) - 1]
+                                    parent_location.level = 1
+                                    parent_locationtype = LocationType.get_all_locationtypes()[0]
+                                    parent_location.locationtype = parent_locationtype
+                                    parent_location.save()
+                                    location.parent = parent_location
+                                                                        
+                                else:
+                                    location.level = 1
+                                    locationtype = LocationType.get_all_locationtypes()[0]
+             
                                 location.locationtype = locationtype
+                                
                                 location.save()
                                 tweet.location = location
                                 tweet.location_string = str(location.name)
@@ -280,6 +302,7 @@ class GoogleExtractor:
                             location.name = country
                             location.latitude = lat
                             location.longitude = lng
+                            
                             location.level = 1
                             location.locationtype = locationtype
                             location.save()

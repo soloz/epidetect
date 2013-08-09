@@ -12,13 +12,15 @@ from nltk.corpus import stopwords
 from pretests.gtranslate import *
 from pattern.db  import Datasheet
 import epi.models
+from nltk.tokenize import RegexpTokenizer
+
 
 import tweepy
 
 
 
 class Evaluator:
-    ''' This class holds method stubs and some utilities for 
+    ''' This class is meant to hold method stubs and some utilities for 
         connecting to the GPHIN, WHO, and ProMED-Mail data sources for evaluation.
     '''
        
@@ -60,9 +62,10 @@ class LocationDetect:
     '''
       
     def detectLocation(self, *args, **kwargs):
-        ''' Perform location detection from tweets.
+        ''' This menthod perform location detection from documents supplied.
         '''
         
+        ## We initiate geocode API connection to Google Geocode API.
         try:
             g = geocoders.GoogleV3()
             place, (lat, lng) = g.geocode(args[0], exactly_one = False)[0]
@@ -74,11 +77,14 @@ class LocationDetect:
 
     
     def getTweeterLocation(self, *args, **kwargs):
-        ''' Perform location detection from tweets.
+        ''' This method determines the location of a tweeter.
+        It uses the tweepy API for connection to Twitter to determine location.
+        The location returned is an approximation to the tweet location
         '''
         auth = tweepy.OAuthHandler("KVuUoRpXhSToTasXX3bB3A", "7ckvovFEbJkNGwl1Lj7txH0dJp5UiCLTJDEYoCl8U")
         auth.set_access_token("14702590-KRTpR5VYzZMxblqtKSW7x1MvaPA4WdMj3v6crmVY", "Ky6f6TN6ad3SgUeL17kH9dg3zQPs21NQoSTGnMlYw")
         
+        #Setting authentication parameters after the settings above
         twitterapi = tweepy.API(auth)
         user = twitterapi.get_user(args[0])
            
@@ -88,18 +94,23 @@ class LocationDetect:
             return None
 
     def extractLocation(self, *args, **kwargs):
-        '''Performs extraction of Location information from Documents
+        '''This is a supporting method to perform extraction of location.
+        The method determines if a mention in a document is part of predefined 
+        locations of interest.
         '''
        
+        # We use tokenizer provided by NLTK to form a regex that splits a 
+        # document into array of words.
         try: 
             tokenizer = RegexpTokenizer(r'\w+|[^\w\s]+')
 
+            # A list of pre-defined countries. Storage in a database is necessary
             countries = ['Turkey', 'Iran', 'Russia', 'Pakistan', 'UAE', 'Saudi Arabia', 'Sudan', 'Somalia', 'China', 'Saudi']
             tokens = tokenizer.tokenize(args[0])
 
             for word in tokens:
                 if (word in countries):
-                    print "%s is extracted" % word
+                   
                     if ('Saudi' in word):
                         word = word+" Arabia"
                     return word
@@ -109,16 +120,23 @@ class LocationDetect:
         return False
 
 class LangDetect:
-    ''' This class detects the language of a document using a likelihood algorithm and NLTK tokenizer.
+    ''' This class detects the language of a document using a likelihood 
+        algorithm and NLTK tokenizer.
     '''
     
     def lang_detect(self, document):
+        ''' This method detects the language of a document using a likelihood 
+        algorithm and NLTK tokenizer.
+    '''
         ratios = self.lang_likelihood(document)
         most_rated_language = max(ratios, key=ratios.get)
        
         return most_rated_language
     
     def lang_likelihood(self, document):
+        ''' This method computes the language likelihood using algorithm 
+        and tokenizer from NLTK.
+    '''
         languages_likelihood = {}
 
         tokens = wordpunct_tokenize(document)
@@ -130,21 +148,30 @@ class LangDetect:
             common_elements = words_set.intersection(stopwords_set)
 
             languages_likelihood[language] = len(common_elements) # language "score"
-
+        
         return languages_likelihood
 
 
 class LangTranslate:
-    ''' This class translates document from given language to english for classification.
+    ''' This class translates document from given language to english for 
+    further processing by the classification algorithm.
     '''
     def translate(self, *args):
-        translator = GoogleTransator()
+        ''' This method translates documents supplied. Connects to Google 
+        Translate API.
+    '''
+        translator = GoogleTranslator()
         
-        print "Translation of: %s is: %s" % (args[0], translator.translate(text=args[0], target='en', source=args[1]))
+        translation = translator.translate(args[0], target='en', source=args[1])
+        
+        print "Translation of: %s is: %s" % (args[0], str(translation[0]['translatedText']))
+        
+        return str(translation[0]['translatedText'])
         
 
 class DiseaseType:
-    ''' This class detects the types of diseases contained in document.
+    ''' This class implements helper method to support detection of the types
+        of diseases contained in reports/documents.
         Due to the nature of the classifier deployed, the type of disease
         detected by the model can not be pre-determined. So a separate 
         algorithm to ascertain the diseases with which a report is 
@@ -152,6 +179,12 @@ class DiseaseType:
     ''' 
 
     def typedetect(self, *args):
+        ''' This method detects the types of diseases contained in document.
+            Due to the nature of the classifier deployed, the type of disease
+            detected by the model can not be pre-determined. So a separate 
+            algorithm to ascertain the diseases with which a report is 
+            associated is necessary
+        ''' 
 
         tokenizer = RegexpTokenizer(r'\w+|[^\w\s]+')
 
@@ -162,8 +195,11 @@ class DiseaseType:
   
         #diseases = tokenizer.tokenize(diseases)
         
-        diseases = ['flu', 'swine flu', 'west nile', 'tuberculosis', 'avian influenza', 'influenza', 'measles', 'intestinal', 'dengue', 'respiratory', \
-        'albinism', 'coronavirus', 'polio', 'legionella', 'gastroenteric', 'h1n1', 'hepatitis', 'ebola', 'hendra', 'influenzavirus', 'meningitis', 'h7n9', 'sars', 'hiv', 'aids', 'polio']
+        diseases = ['flu', 'swine flu', 'west nile', 'tuberculosis', \
+        'avian influenza', 'influenza', 'measles', 'intestinal', 'dengue', \
+        'respiratory','albinism', 'coronavirus', 'polio', 'legionella', \
+        'gastroenteric', 'h1n1', 'hepatitis', 'ebola', 'hendra', 'influenzavirus', \
+        'meningitis', 'h7n9', 'sars', 'hiv', 'aids', 'polio']
 
         document = tokenizer.tokenize(args[0])
         
@@ -201,7 +237,6 @@ class Utility:
             12.) lat
             13.) lng
             14.) country
-            
         ''' 
         try: 
         # We extract information from database and store in a csv
@@ -226,15 +261,77 @@ class Utility:
         
         
     def loaddata(self):
-        try: 
-        # We extract information from database and store in a csv
-            
-            data_dump = Datasheet.load("archive/database/datadump.csv")
-            index = dict.fromkeys(data_dump[0], True)
+        
+        tokenizer = RegexpTokenizer(r'\w+|[^\w\s]+')
+        data_dump = Datasheet.load("archive/database/datadump.csv")
+        index = dict.fromkeys(data_dump[0], True)
+        
+        for line in data_dump:
+            tweet = epi.models.Tweet()
+            tweet.text = line [1]
+            tweet.label = line [3]
+            tweet.owner = line [2]
 
-        except:
-            data_dump = Datasheet()
-            index = {}
+            tweet.disease_type = line [5]
+            print "Line 8 is: ", line[8]
+            
+            place = line [8]
+            tweet.tweet_time = line [7]
+            
+            geolocation = LocationDetect()
+            geolocationInfo = None
+            
+            if place:
+                geolocationInfo = geolocation.detectLocation(place)
+                print "Geolocation detected ", geolocationInfo
+            
+            for i in range(1,1000):
+                pass
+                
+            if geolocationInfo:
+                
+                lat = "%.5f" % geolocationInfo[0]
+                lng = "%.5f" % geolocationInfo[1]
+                place = "%s" % geolocationInfo[2]
+                           
+                location = epi.models.Location()
+                location.name = place
+                location.latitude = lat
+                location.longitude = lng
+                
+                tokens = tokenizer.tokenize(place)
+    
+                if len(tokens) > 1:                            
+                    location.level = 2
+                    locationtype = epi.models.LocationType.get_all_locationtypes()[1]
+                    
+                    parent_location = epi.models.Location()
+                    parent_location.name = tokens[len(tokens) - 1]
+                    parent_location.level = 1
+                    parent_locationtype = epi.models.LocationType.get_all_locationtypes()[0]
+                    parent_location.locationtype = parent_locationtype
+                    parent_location.save()
+                    location.parent = parent_location
+                                                        
+                else:
+                    location.level = 1
+                    locationtype = epi.models.LocationType.get_all_locationtypes()[0]
+
+                location.locationtype = locationtype
+                
+                location.save()
+                tweet.location = location
+                
+                try:
+                    tweet.location_string = str(location.name)
+                except:
+                    print "Unicode Error"
+                
+            tweet.save()
+            
+        print "Table length: ", len(data_dump)
+
+   
             
             
             

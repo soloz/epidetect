@@ -18,7 +18,9 @@ class NaiveBayes:
         self.word_features_test =[]
 
     def buildModel(self):
-        ''' Perform model building and intermittent model optimizations based on training corpus.
+        ''' This method performs model building and intermittent model 
+        optimizations based on trained corpus. Naive Bayes classifier has been
+        used in training a model.
         '''
         global word_features_train
         global classifier
@@ -28,6 +30,7 @@ class NaiveBayes:
         train_tweets = []
         test_tweets = []
 
+        #Positive instances of tweets for training
         pos_event_tweets_train = [('10 cases of h1n1 has been reported in saudi', 'positive'),('5 killed in saudi of h1n1', 'positive'),
         ('10 people have been said to contract h1n1', 'positive'),('25 people infected with h1n1 now in the hospital in argentina', 'positive'),
         ('traces of h1n1 recorded near turkey', 'positive'), ('private hospitals advised to close down because of the noticed h1n1', 'positive'),
@@ -37,6 +40,7 @@ class NaiveBayes:
          ('H1N1 flu outbreak in northern Chile kills 11', 'positive'),
          ('New case of h1n1 confirmed in China', 'positive')         ]
 
+        #Negative instances of tweets for training model.
         neg_event_tweets_train = [('how to take care of h1n1', 'negative'),('h1n1 and how to prevent it', 'negative'),
         ('i\'m having flu', 'negative'),('is h1n1 a deluge in the 21st century ?', 'negative'),
         ('how are we affected by upsurge in the h1n1 recently', 'negative'), ('is this h1n1 or what ?', 'negative'),
@@ -47,10 +51,13 @@ class NaiveBayes:
         ('how can we curb the situation of h1n1 ? ', 'negative')]
 
 
+        #Positive instances of tweets for testing model.
         pos_event_tweets_test = [('there are 7 reported cases of h1n1 in zambia', 'positive'),('5 reported dead repeated cases of h1n1', 'positive'),
         ('h1n1 outbreak has been discovered near india', 'positive'),('50 people have died so far in middle east over outbreak of h1n1', 'positive'),
         ('detection of h1n1 in turkey', 'positive'), ('many hospitals have been closed down due to outbreak of h1n1', 'positive') ]
 
+
+        #Negative instances of tweets for testing model.
         neg_event_tweets_test = [('RT @trutherbot: Protip: Flu shots do not work.', 'negative'),
         ('Retweet this.... doctors are saying there might be a new flu, and that they don\'t have the vaccination..  http://t.co/Apk3QNjFs1', 'negative'),
         ('Nothing seems to be working for this flu...', 'negative'),
@@ -59,20 +66,24 @@ class NaiveBayes:
         ('@Perrie_Ndublet I had the flu so I went to the loo', 'negative')]
 
 
+        #Training model using the document corpus above.
         for (words, sentiment) in pos_event_tweets_train + neg_event_tweets_train:
             words_filtered = [e.lower() for e in words.split() if len(e) >= 3]
             train_tweets.append((words_filtered, sentiment))
 
+        #Testing model using test corpus. 
         for (words, sentiment) in pos_event_tweets_test + neg_event_tweets_test:
             words_filtered = [e.lower() for e in words.split() if len(e) >= 3]
             test_tweets.append((words_filtered, sentiment))
 
+        #Building word features
         word_features_train = self.get_word_features(self.get_words_in_tweets(train_tweets))
         word_features_test = self.get_word_features(self.get_words_in_tweets(test_tweets))
-        
+
         training_set = nltk.classify.apply_features(self.extract_train_features, train_tweets)
         test_set = nltk.classify.apply_features(self.extract_test_features, test_tweets)
 
+        #Building a classifier.
         classifier = nltk.NaiveBayesClassifier.train(training_set)
         print 'accuracy:', nltk.classify.util.accuracy(classifier, test_set)
 
@@ -159,6 +170,8 @@ class SVMLearner:
     global classifier
 
     def testModel(self, *args):
+        ''' This method performs model testing.
+        '''
         if args:
             classifier = Classifier.load('models/svm_model.ept')
             print "Document class is %s" % classifier.classify(Document(args[0]))
@@ -174,7 +187,8 @@ class SVMLearner:
         print float(i) / n
 
     def buildModel(self, *args, **kwargs):
-        ''' Performs model building from training using SVM algorithm.
+        ''' Performs model building from training using SVM algorithm 
+        implementation in patters.vector API.
         '''
         classifier = SVM()
 
@@ -187,6 +201,7 @@ class SVMLearner:
         for label, document in data[:22]:
             classifier.train(Document(document, type=label))
 
+        #Saving model to file system.
         try:
             print "saving build model..."
             classifier.save('models/svm_model.ept')
@@ -194,7 +209,10 @@ class SVMLearner:
             print "cannot save model file for some reason"
 
     def classify(self, document):
-
+        ''' This method is used to classify new documents. Uses the saved model.
+        '''
+        
+        #Loading csv predictions and corpora documents.
         try: 
             svm_predictions = Datasheet.load("predictions/svm.csv")
             svm_corpus = Datasheet.load("corpora/svm/svm.csv")
@@ -207,7 +225,7 @@ class SVMLearner:
             index_pred = {}
             index_corp = {}
 
-
+        #Load model from file system
         classifier = Classifier.load('models/svm_model.ept')
         label = classifier.classify(Document(document))
 

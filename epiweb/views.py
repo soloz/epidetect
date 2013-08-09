@@ -40,6 +40,8 @@ class ImprovedIndexView(generic.ListView):
         
         dss = self.kwargs['disease']
         
+        if self.request.method == 'POST':
+            print "Request is post!"
         
         tweet_data = Tweet.get_trends_data(disease=dss)
         google_data = GoogleDocument.aggregate_by_day()
@@ -52,11 +54,14 @@ class ImprovedIndexView(generic.ListView):
         bar1 = [[70.5, 80.2], "San Fransisco, LA", 4, "http://whatever"]
         bar2 = [[70.5, 88.2], "San Bruno, LA", 5, "http://whatever2"]
         
-        points = Tweet.get_map_data(disease=dss)
+        map_points = Tweet.get_map_data(disease=dss)
+        countries = Tweet.get_outbreak_countries(dss)
+        diseases = Tweet.get_all_diseases()
         
-        print "Disease is %s" % dss
-                   
-        return {'trendsdata':trends_dataset,  'mapsdata': points,}
+        
+        print "Countries are", countries
+      
+        return {'trendsdata':trends_dataset,  'mapsdata': [json.dumps(map_points)], 'countrydata':[json.dumps(countries)], 'diseases': diseases}
         
 
 class DetailView(generic.DetailView):

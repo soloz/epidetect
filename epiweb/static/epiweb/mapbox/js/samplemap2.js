@@ -1,13 +1,16 @@
 
 $(function () {
 
+
+
 geolocationdata = new Array()
+
 colors = new Array()
 colors.push('#CC0033')
 colors.push('#0099ff')
 
 //Unpacking Coordinates data
-for (var i=1;i<mapsdata.length;i++)
+for (var i=0;i<mapsdata[1].length;i++)
 {
 
 var jsonobject =
@@ -15,17 +18,15 @@ var jsonobject =
     type: 'Feature',
     geometry: {
         type: 'Point',
-        coordinates: [mapsdata[i][0][0], mapsdata[i][0][1]]
+        coordinates: [mapsdata[1][i][0][0], mapsdata[1][i][0][1]]
     },
     properties: {
-        title: mapsdata[i][1],
+        title: mapsdata[1][i][1],
         // http://mapbox.com/developers/simplestyle/
-        'marker-color': colors[i-1]
+        'marker-color': colors[i]
     }
     };
-    
     geolocationdata.push(jsonobject);
-    
 }
    
 var map = L.mapbox.map('map', 'examples.map-20v6611k')

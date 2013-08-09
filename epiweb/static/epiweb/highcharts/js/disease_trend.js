@@ -31,7 +31,7 @@
                 text: 'Trends of Diseases on The Social Media'
             },
             subtitle: {
-                text: 'Hello'
+                text: countrydata[1][1][2]
             },
             xAxis: {
                 type: 'datetime',

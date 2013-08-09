@@ -1,4 +1,18 @@
-      $(function () { 
+$(function () { 
+
+categories = new Array()
+presentdata = new Array()
+avgdata = new Array()
+
+for (var i=0;i<countrydata[1].length;i++)
+{
+    categories.push (countrydata[1][i][0]+': '+ countrydata[1][i][2]);
+    presentdata.push(countrydata[1][i][1])
+    avgdata.push(1)
+
+}
+
+
          $('#container').highcharts({
             chart: {
                 type: 'bar'
@@ -7,22 +21,22 @@
                 text: 'Alerts Statistics'
             },
             subtitle: {
-                text: 'Europe'
+                text: countrydata[1][1][2]
             },            
             xAxis: {
-                categories: ['UK: Disease 1', 'Germany: Disease 2', 'Poland: Disease 3']
+                categories: categories
             },
             yAxis: {
                 title: {
-                    text: 'Social Media Report Counts'
+                    text: 'Alert Counts'
                 }
             },
             series: [{
                 name: 'Present',
-                data: [1, 0, 4]
+                data: presentdata
             }, {
                 name: '2-Week Average',
-                data: [5, 7, 3]
+                data: avgdata
             }]
         });
       });

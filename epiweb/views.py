@@ -54,7 +54,7 @@ class ImprovedIndexView(generic.ListView):
         
         points = Tweet.get_map_data(disease=dss)
         
-        print "Disease is %s" % dss
+        print "Disease queried is %s" % dss
                    
         return {'trendsdata':trends_dataset,  'mapsdata': points,}
         

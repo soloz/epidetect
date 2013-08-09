@@ -2,6 +2,8 @@ from django.db import models
 from datetime import datetime, timedelta
 import time
 from epi.epidetect import LocationDetect
+import json
+from nltk.tokenize import RegexpTokenizer
 
 # Create your models here.
 
@@ -41,9 +43,7 @@ class Location(models.Model):
     @staticmethod
     def get_all_locations():
         return Location.objects.all()
-    
-    def __unicode__(self):
-        return self.name
+
 
 
 class Tweet(models.Model):
@@ -61,9 +61,6 @@ class Tweet(models.Model):
     from_lang = models.CharField(max_length=20)
     
     
-    def __unicode__(self):
-        return self.text
-
     def getStatus(self):
         pass
 
@@ -89,32 +86,123 @@ class Tweet(models.Model):
             data.append(daily_data)
 
     	return data
-
+    
+    @staticmethod
+    def get_all_diseases():
+        diseases = []
+        for tweet in Tweet.objects.all():
+            if tweet.disease_type:
+                disease = tweet.disease_type.split(',')
+                if len(disease) > 1:
+                    disease = disease[1]
+                else:
+                    disease = tweet.disease_type
+                if disease not in diseases:
+                    diseases.append(str(disease))
+              
+        return diseases
+        
+        
     @staticmethod
     def get_map_data(disease="all"):
                 
         data = []
-        location = LocationDetect() 
         
         for tweet in Tweet.objects.filter(disease_type__contains = disease):
-       
-            if tweet.location_string:
+   
+            if tweet.location:
                 
-                geolocationInfo = location.detectLocation(tweet.location_string)
+                #lat =  tweet.location.latitude
+                #lng =  tweet.location.longitude
+               # name =  tweet.location.name
                 
-                if geolocationInfo: 
-                    lat =  geolocationInfo[0]
-                    lng =  geolocationInfo[1]
+                lat = "%.5f" % tweet.location.latitude
+                lng = "%.5f" % tweet.location.longitude
+                name = "%s" % tweet.location.name
+                
+                try:
+                    data.append([[float(lng), float(lat)], name]) 
                     
-                    if tweet.disease_type:
-                        try:
-                            data.append([[lng, lat], str(tweet.location_string)])  
-                        except:
-                            print "Omitting non-Unicode characters in Location geocoding"            
-
+                except:
+                    print "Omitting non-Unicode characters in Location geocoding"            
+       
         return data
 
+    @staticmethod
+    def get_country_data(country="all"):
+        if country == "all":
+            pass
+        else:
+            country_data = Tweet.objects.filter(location_string__contains=country)
 
+        return country_data
+        
+    def numberofoccurance(country):
+        return len(Location.objects.filter(name__contains=country))
+    
+    @staticmethod
+    def get_outbreak_countries(disease=all):
+        tokenizer = RegexpTokenizer(r'\w+|[^\w\s]+')
+        
+        countries = []
+        
+        if disease == all:
+            for location in Location.objects.all():
+                country = tokenizer.tokenize(location.name)
+                country = country[len(country)-1]
+                
+                if country not in countries:
+                    countries.append(str(country))
+        else:
+            for tweet in Tweet.objects.filter(disease_type__contains=disease):
+                if tweet.location:
+                    country = tokenizer.tokenize(tweet.location.name)
+                    country = country[len(country)-1]
+                    country_disease_count = [str(country), \
+                    len(Tweet.objects.filter(disease_type__contains=disease, \
+                    location_string__contains=country)), disease]
+                    
+                    if country_disease_count not in countries:
+                        countries.append(country_disease_count)
+                    
+        return countries
+
+    @staticmethod
+    def get_top_countries(country_list):
+        disease_counts = []
+        countries = []
+                
+        for country in country_list:
+            disease_count = len(Tweet.objects.filter(location_string__contains=country))
+            disease_counts.append(disease_count)
+        
+        sorted_disease_counts = Tweet.sort_countries(disease_counts)
+        
+        for country in country_list:
+            disease_count = len(Tweet.objects.filter(location_string__contains=country))
+            if country not in countries and disease_count > sorted_disease_counts[len(sorted_disease_counts) - 4]:
+                countries.append(country)
+
+        print "Top 3 countries are", countries
+        
+        return countries
+        
+    @staticmethod    
+    def sort_countries(disease_counts):
+        for i in range(1, len(disease_counts)):
+
+            # i values
+            print "i = ", i
+
+            val = disease_counts[i]
+            j = i - 1
+            while (j >= 0) and (disease_counts[j] > val):
+                disease_counts[j+1] = disease_counts[j]
+                j = j - 1
+            disease_counts[j+1] = val
+        
+        return disease_counts
+    
 class GoogleDocument(models.Model):
     """A Google document represents a search result from google reporting outbreak."""
     document = models.CharField(max_length=200)

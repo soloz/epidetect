@@ -19,52 +19,12 @@ class TweetExtractor:
     ''' This class will extract tweets from Twitter via the Twitter search and streaming APIs. 
     The tweets would be stored in a CSV file for model building and subsequently into an SQL database '''
 
-    def tweetSearch(self):
-        try: 
-        # We extract and store tweets in a Datasheet that can be saved as a CSV file.
-        # The first column hold nique ID for each tweet. The CSV file is grown by adding new tweets that
-        # haven not previously been encountered. An ID as index on the first column allows for checking if an ID already exists.
-        # The index becomes important once more and more rows are added to the table (speed). 
-        # The CSV is loaded into an SQLite database at some point.
-            search_table = Datasheet.load("tweet_search_data.csv")
-            index = dict.fromkeys(search_table.columns[0], True)
-        except:
-            search_table = Datasheet()
-            index = {}
-
-        twitter_api = Twitter(license=None,language="en")
-
-        # With cached=False, a live request is sent to Twitter,
-        # so we get the latest results for the query instead of those in the local cache.
-        for tweet in twitter_api.search("flu", count=10000, cached=False):
-            print tweet.text
-            print tweet.author
-            print tweet.date
-            
-            print hashtags(tweet.text) #print hastags associated with the tweet. 
-
-            # a unique identifier for tweets is created by combining tweet content and author.
-            id = str(hash(tweet.author + tweet.text))
-
-            # Only non-existing tweets are added to the table.
-            if len(search_table) == 0 or id not in index:
-                print "Leng of search_table is %s" % len(search_table) 
-                search_table.append([id, tweet.author, tweet.url, hashtags(tweet.text), tweet.country, tweet.speed, tweet.description, tweet.source, tweet.date, tweet.text])
-                index[id] = True
-
-        search_table.save("tweet_search_data.csv")
-
-        print "Total results:", len(search_table)
-        print
-
-
     def tweetStream(self):
         try: 
-        # We extract and store tweets in a Datasheet that can be saved as a CSV file.
-        # The first column hold nique ID for each tweet. The CSV file is grown by adding new tweets that
-        # haven not previously been encountered. An ID as index on the first column allows for checking if an ID already exists.
-        # The index becomes important once more and more rows are added to the table (speed). 
-        # The CSV is loaded into an SQLite database at some point.
+        # We extract and store tweets in database and CSV file. Positive tweets
+        # are stored in a database, while negative tweets are stored in CSV.
+        # The CSV file is inspected in future for building corpus to use to 
+        # build better classifier.
             
             stream_corpus_table = Datasheet.load("corpora/twitter/tweets_stream_data.csv")
             index_corp = dict.fromkeys(stream_corpus_table [0], True)
@@ -80,6 +40,8 @@ class TweetExtractor:
 
         #twitter_api = Twitter(license=None,language="en")
 
+        #Connection initiation to the twitter streaming API. The mentioned 
+        #diseases are tracked on twitter.
         stream_api = Twitter().stream("flu, swine flu, West Nile Virus, Tuberculosis, Avian Influenza, Influenza, Measles, Acute Intestinal Infection, Dengue, Respiratory Syndrome, Albinism, Coronavirus, Polio, Legionella, Gastroenteric Syndrome, African Swine, H1N1, Hepatitis A, Ebola, Hendra Virus, Influenzavirus, Meningitis, H7N9 virus, SARS")
 
         while True:
@@ -87,11 +49,11 @@ class TweetExtractor:
             #print i
             # Poll Twitter to see if there are new tweets.
             stream_api.update()
-            # The stream is a list of buffered tweets so far,
-            # with the latest tweet at the end of the list.
-            
+  
+            #Tokenizer to separate words in tweets.          
             tokenizer = RegexpTokenizer(r'\w+|[^\w\s]+')
             
+            #Determination of positve/negative tweets.
             for twt in reversed(stream_api):
                                 
                 langDetect = LangDetect()

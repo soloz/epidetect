@@ -35,7 +35,7 @@
     </style>
     <style>
     #map {
-      width:600px;
+      width:750px;
       height:400px;
     }
   </style>
@@ -93,7 +93,7 @@
                             <li><a href="#fakelink">Search</a></li>
                           </ul> <!-- /Sub menu -->
                         </li>
-                        <li><a href="#fakelink">Element Three</a></li>
+                        <li><a href="#fakelink">Bing</a></li>
                       </ul> <!-- /Sub menu -->
                     </li>
                     <li>
@@ -124,20 +124,33 @@
             </div>
           </div>
           
-    <div class="row"> <!-- / first (banner) row -->
-            
+    <div class="row demo-row"> <!-- / first (banner) row -->
             <div class="span1">
-            
             </div>
              
-        <div class="span12">
-            <h4 class="demo-logo">
-              Epidetect
-              <small>An Epidemic Intelligence Framework</small>
-            </h4>
+            <div class="span12">
+                <h4 class="demo-logo">
+                  Epidetect
+                  <small>An Epidemic Intelligence Framework</small>
+                </h4>
+            </div>
+        
+        <div class="span3">
         </div>
-      
-    </div> <!-- / first (banner) row -->
+        
+        <div class="span3">
+            <form method="post" action=h1n1> {% csrf_token %}
+                <select>
+                <option selected="selected" disabled>Tracked Diseases:</option>
+                     {% for disease in data.diseases %}
+                        <option value="{{disease}}">{{disease}}</option>
+                    {% endfor %}  
+                </select>
+                <input type="submit" value="Submit">
+            </form>
+        </div>
+     </div> <!-- / first (banner) row -->
+
 
    <div class="row"> <!-- / second row -->
             
@@ -297,19 +310,35 @@
 <!-- manually inputed javascripts =============================-->
 <script type="text/javascript">
 
+    var mapsdata = new Array();
+    {% for databundle in data.mapsdata %}
+            mapsdata [{{ forloop.counter }}] = {{databundle|safe}}
+    {% endfor %} 
+    
     var trendsdata = new Array();
      {% for databundle in data.trendsdata %}
             trendsdata [{{ forloop.counter }}] = {{databundle|safe}}
     {% endfor %}  
     
-    var mapsdata = new Array();
-    {% for databundle in data.mapsdata %}
-            mapsdata [{{ forloop.counter }}] = {{databundle|safe}}
-    {% endfor %}  
     
+    var countrydata = new Array();
+     {% for databundle in data.countrydata %}
+            countrydata [{{ forloop.counter }}] = {{databundle|safe}}
+    {% endfor %}  
+ 
 </script>
+
 Data transfered
-{{data.mapsdata2}}
+
+{{data.mapsdata}}
+{{data.trendsdata}}
+{{data.countrydata}}
+{{data.diseases}}
+
+    {% for databundle in data.countrydata %}
+            {{databundle}}
+    {% endfor %} 
+
 
     <!-- Load JS here for greater good =============================-->
     <script src="{% static 'epiweb/mapbox/js/mapbox.js' %}"></script>
@@ -338,7 +367,8 @@ Data transfered
     <script src="{% static 'epiweb/d3/js/d3.v3.min.js' %}"></script>
     <script src="{% static 'epiweb/d3/js/d3.v2.min.js' %}"></script>
     <script src="{% static 'epiweb/d3/js/highlight.min.js' %}"></script>
-    <script src="{% static 'epiweb/d3/js/visualizer2.js' %}"></script>
+
+    <script src="{% static 'epiweb/d3/js/tweets.js' %}"></script>
         
     <!--script src="{% static 'epiweb/flatui/js/jquery-1.8.3.min.js' %}"></script>
     <script src="{% static 'epiweb/flatui/js/jquery-ui-1.10.3.custom.min.js' %}"></script>

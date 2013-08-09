@@ -10,6 +10,8 @@ import nltk.classify.util
 from nltk.classify import NaiveBayesClassifier
 from nltk.corpus import movie_reviews
 from epi.classification import NaiveBayes 
+from epi.epidetect import *
+from geopy import geocoders  
 
 class SimpleTest(TestCase):
     def test_basic_addition(self):
@@ -19,20 +21,33 @@ class SimpleTest(TestCase):
         self.assertEqual(1 + 1, 2)
 
 
-class TestEpidetect(TestCase):
-    def test_basic_addition(self):
+class TestLanguageTranslation(TestCase):
+    def test_translate(self):
         """
-        Tests that 1 + 1 always equals 2.
+        Testing translation of language using Google Translate API.
         """
-        self.assertEqual(1 + 1, 2)
+        pass
+        
+        #text = 'Inverno atipico deixa Salvador em alerta para epidemia de dengue http://t.co/ukSEdpiLxk'
+        #translation = 'Winter leaves atypical Salvador alert for dengue epidemic http://t.co/ukSEdpiLxk'
+        
+        #l = LangTranslate()
+        #translated_text = l.translate(text, 'pt')
+        
+        #self.assertEqual(translation, translated_text)
 
-
-class TestPresentation(TestCase):
-    def test_basic_addition(self):
+class TestDiseaseType(TestCase):
+    def test_diseasetype(self):
         """
-        Tests that 1 + 1 always equals 2.
+        Tests to determine or ascertain disease type contains in documents/reports.
         """
-        self.assertEqual(1 + 1, 2)
+        document = "First confirmed death from H1N1 flu virus in Rivers. http://t.co/MNDQfbIu4a #H1N1 #SwineFlu"
+        disease_types = ['flu', 'h1n1']
+        
+        dd = DiseaseType()
+        detected_types = dd.typedetect(document)
+        
+        self.assertEqual(disease_types, detected_types)
 
 
 class TestExtractor(TestCase):
@@ -42,72 +57,57 @@ class TestExtractor(TestCase):
         """
         self.assertEqual(1 + 1, 2)
 
+class TestLangDetect(TestCase):
+    def test_lang_detect(self):
+        lang_detect = LangDetect()
+        lang = 'english'
 
-class TestNaiveBayes(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
+        text = 'RT @ottawasuncom: West Nile virus has been found in mosquitoes in Perth, about 80k west of Ottawa, local health unit reports...'
+        detected_lang = lang_detect.lang_detect(text)
 
-        classifier = NaiveBayes()
-        model = classifier.buildModel()
+        self.assertEqual(lang, detected_lang)
+        
+    def test_lang_likelihood(self):
+        lang_likelihood = {'swedish': 1, 'danish': 1, 'hungarian': 1, 'finnish': 0, 'portuguese': 3, 'german': 0, 'dutch': 1, 'french': 2, 'spanish': 2, 'norwegian': 1, 'english': 1, 'russian': 0, 'turkish': 1, 'italian': 0}
+        text = 'Inverno atipico deixa Salvador em alerta para epidemia de dengue http://t.co/ukSEdpiLxk'
+        
+        lang_detect = LangDetect()
+        
+        detected_likelihood = lang_detect.lang_likelihood(text)
+        
+        self.assertEqual(lang_likelihood, detected_likelihood)
+        
+class TestLocationDetect(TestCase):
+    def test_detectLocation(self):
+            
+        location = (55.598057999999988, -4.4517390000000008, u'Hurlford, East Ayrshire, UK')
+        location_text = 'Hurlford, East Ayrshire, UK'
+        
+        loc_detect = LocationDetect()
+        (lat, lng, place) = loc_detect.detectLocation(location_text)
 
-        #Sample documents obtained from corpus.
-        test_tweets = []
-
-        pos_event_tweets_test = [('there are 7 reported cases of h1n1 in zambia', 'positive'),('5 reported dead repeated cases of h1n1', 'positive'),
-        ('h1n1 outbreak has been discovered near india', 'positive'),('50 people have died so far in middle east over outbreak of h1n1', 'positive'),
-        ('detection of h1n1 in turkey', 'positive'), ('many hospitals have been closed down due to outbreak of h1n1', 'positive') ]
-
-        neg_event_tweets_test = [('RT @trutherbot: Protip: Flu shots do not work.', 'negative'),
-        ('Retweet this.... doctors are saying there might be a new flu, and that they don\'t have the vaccination..  http://t.co/Apk3QNjFs1', 'negative'),
-        ('Nothing seems to be working for this flu...', 'negative'),
-        ('EG Flu Tracking News 84 in state die of H1N1 in 6 months - Times of India http://t.co/GaDDrTiDNz', 'negative'),
-        ('Flu season comes and goes, but #WordFlu season is here to stay! #NoYouWontGetSick #ItsGoingToBeFine #ItsAGame', 'negative'), 
-        ('@Perrie_Ndublet I had the flu so I went to the loo', 'negative')]
-
-        for (words, sentiment) in pos_event_tweets_test + neg_event_tweets_test:
-            words_filtered = [e.lower() for e in words.split() if len(e) >= 3]
-            test_tweets.append((words_filtered, sentiment))
-
-        word_features_test = classifier.get_word_features(classifier.get_words_in_tweets(test_tweets))
-        classifier.set_word_features = word_features_test
-        test_set = nltk.classify.apply_features(classifier.extract_test_features, test_tweets)
-
-        print 'Accuracy of NaiveBayes:', nltk.classify.util.accuracy(model, test_set)
-        model.show_most_informative_features(32)
-
-        #self.assertEqual(1 + 1, 2)
-
-
-
-class TestMovieCorpusClassifier(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-    def word_feats(words):
-        return dict([(word, True) for word in words])
-    
-    negids = movie_reviews.fileids('neg')
-    posids = movie_reviews.fileids('pos')
-    
-    negfeats = [(word_feats(movie_reviews.words(fileids=[f])), 'neg') for f in negids]
-    posfeats = [(word_feats(movie_reviews.words(fileids=[f])), 'pos') for f in posids]
-
-    negcutoff = len(negfeats)*3/4
-    poscutoff = len(posfeats)*3/4
-
-    trainfeats = negfeats[:negcutoff] + posfeats[:poscutoff]
-    testfeats = negfeats[negcutoff:] + posfeats[poscutoff:]
-
-    print 'train on %d instances, test on %d instances' % (len(trainfeats), len(testfeats))
-
-    classifier = NaiveBayesClassifier.train(trainfeats)
-    print 'Accuracy of Sample Corpus:', nltk.classify.util.accuracy(classifier, testfeats)
-    classifier.show_most_informative_features()
-
-
-
-        #self.assertEqual(1 + 1, 2)
-
+        self.assertEqual(location, (lat, lng, place))
+        
+    def test_getTweetLocation(self):
+        user = 'theopendaily'
+        location = 'Los Angeles' 
+        
+        loc_detect = LocationDetect()
+        
+        userlocation = loc_detect.getTweeterLocation(user)
+        
+        self.assertEqual(location, userlocation)
+    def test_getTweetLocation(self):
+        location = 'Pakistan'
+        text = '@shahalam13 Sounds a lot like Pakistan\'s woes, although Pak has religious extremists killing polio volunteers to add to their challenges.'
+        
+        loc_detect = LocationDetect()
+        
+        extracted_location = loc_detect.extractLocation(text)
+        
+        self.assertEqual(location, extracted_location)
+   
+        
+class TestTweetExtractor(TestCase):
+    def test_tweet_stream(self):
+	    pass

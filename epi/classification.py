@@ -173,14 +173,16 @@ class SVMLearner:
         ''' This method performs model testing.
         '''
         if args:
-            classifier = Classifier.load('models/svm_model.ept')
+            classifier = Classifier.load('models/svm_model2.ept')
+            print "Document is ", Document(args[0])
             print "Document class is %s" % classifier.classify(Document(args[0]))
 
         else:
-            data = Datasheet.load(os.path.join("databases","epi","svm_source.csv"))
+            data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedumplimited.csv"))
             i = n = 0
-            for label, document in data[23:34]:
-                if classifier.classify(Document(document)) == (int(score) > 0):
+            classifier = Classifier.load('models/svm_model2.ept')
+            for document, label in data[101:561]:
+                if classifier.classify(Document(document)) == (int(label) > 0):
                     i += 1
                 n += 1
         
@@ -193,18 +195,19 @@ class SVMLearner:
         classifier = SVM()
 
         print "loading document corpus..."
-        data = Datasheet.load(os.path.join("databases","epi","svm_source.csv"))
+        data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedumplimited.csv"))
         data = shuffled(data)
 
         print "training svm model..."
 
-        for label, document in data[:22]:
+        for document, label in data[:100]:
+            print "Document and label are", [document, label]
             classifier.train(Document(document, type=label))
 
         #Saving model to file system.
         try:
             print "saving build model..."
-            classifier.save('models/svm_model.ept')
+            classifier.save('models/svm_model2.ept')
         except:
             print "cannot save model file for some reason"
 

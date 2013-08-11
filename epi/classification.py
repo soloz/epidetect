@@ -213,6 +213,47 @@ class NB2:
         except:
             print "cannot save model file for some reason"
 
+    def classify(self, document):
+        ''' This method is used to classify new documents. Uses the saved model.
+        '''
+        
+        #Loading csv predictions and corpora documents.
+        try: 
+            nb_predictions = Datasheet.load("predictions/NB/patterns_nb.csv")
+            nb_corpus = Datasheet.load("corpora/NB/nb.csv")
+
+            index_pred = dict.fromkeys(nb_predictions.columns[0], True)
+            index_corp = dict.fromkeys(nb_corpus.columns[0], True)
+        except:
+            nb_predictions = Datasheet()
+            nb_corpus = Datasheet()
+            index_pred = {}
+            index_corp = {}
+
+        #Load model from file system
+        classifier = Classifier.load('models/nb_model.ept')
+        label = classifier.classify(Document(document))
+
+        print "Document class is %s" % label
+
+        id = str(hash(label + document))
+
+        if ("positive" in label):
+            if len(nb_predictions) == 0 or id not in index_pred:
+                nb_predictions.append([id, label, document])
+                index_pred[id] = True
+                
+        if len(nb_corpus) == 0 or id not in index_corp:
+            nb_corpus.append([id, label, document])
+            index_corp[id] = True
+
+        nb_predictions.save("predictions/NB/patterns_nb.csv")
+        nb_corpus.save("corpora/NB/nb.csv")
+
+        print "Total predictions:", len(nb_predictions)
+        print "Total documents in corpus:", len(nb_corpus)
+
+
 
 class SVMLearner:
     ''' This class holds method stubs and some utilities for 

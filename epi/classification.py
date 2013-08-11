@@ -6,9 +6,8 @@ from pattern.web import Google, Twitter, Facebook, Bing
 from epidetect import Evaluator
 import nltk
 from epi.models import Tweet, Location, LocationType
-from pattern.en     import tag, predicative
-from pattern.vector import SVM, KNN, NaiveBayes, count, shuffled, Classifier
-from pattern.db  import Datasheet, pprint
+from pattern.en     import tag, predicative 
+from pattern.db  import Datasheet, pprint, csv
 
 
 class NaiveBayes:
@@ -146,20 +145,73 @@ class NaiveBayes:
         '''
 
 
-class KMeansLeaner:
+class NB2:
     ''' This class holds method stubs and some utilities for 
-        implementing the k-means algorithm.
+        implementing the second implementation of Naive Bayes algorithm.
     '''
-       
-    def learn(self, *args, **kwargs):
+
+    def testModel(self, *args):
         ''' Perform learning of a Model from training data.
         '''
-        pass
+        documents = []
+
+        if args:
+            classifier = Classifier.load('models/nb_model.ept')
+            print "Document class is %s" % classifier.classify(Document(args[0]))
+
+        else:
+            data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
+            i = n = 0
+            classifier = Classifier.load('models/nb_model.ept')
+            data = shuffled(data)
+
+            for document, label in data[:100]:
+                doc_vector = Document(document, type=str(label), stopwords=True)
+                documents.append(doc_vector)
+     
+            print "10-fold CV"
+            print k_fold_cv(NB, documents=documents, folds=10)
+
+
+        print "Classes in Naive Bayes Classifier"
+        print classifier.classes
+
+        print "Area Under the Curve: %0.6f" % classifier.auc(documents, k=10)
+
+        print "Model Performance"
+        accuracy, precision, recall, f1 = classifier.test(data[:100])
+
+        print "Accuracy = %.6f; F-Score = %.6f; Precision = %.6f; Recall = %.6f" % (accuracy, f1, precision, recall)
+
+        print "Confusion Matrix"
+        print classifier.confusion_matrix(data[:100])(True)
+
+
 
     def buildModel(self, *args, **kwargs):
         ''' Performs model building.
         '''
-        pass
+
+        #initializing Naive Bayes package
+        classifier = NB()
+        documents = []
+
+        print "loading document corpus..."
+        data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
+        data = shuffled(data)
+
+        print "training svm model..."
+
+        for document, label in data[100:]:
+            doc_vector = Document(document, type=str(label), stopwords=True)
+            classifier.train(doc_vector)
+            
+        #Saving model to file system.
+        try:
+            print "saving build model..."
+            classifier.save('models/nb_model.ept')
+        except:
+            print "cannot save model file for some reason"
 
 
 class SVMLearner:
@@ -172,21 +224,45 @@ class SVMLearner:
     def testModel(self, *args):
         ''' This method performs model testing.
         '''
+
+        documents = []    
+
         if args:
             classifier = Classifier.load('models/svm_model2.ept')
             print "Document is ", Document(args[0])
             print "Document class is %s" % classifier.classify(Document(args[0]))
 
         else:
-            data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedumplimited.csv"))
+            data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
             i = n = 0
             classifier = Classifier.load('models/svm_model2.ept')
-            for document, label in data[101:561]:
-                if classifier.classify(Document(document)) == (int(label) > 0):
+            data = shuffled(data)
+
+            for document, label in data[:100]:
+                if classifier.classify(Document(document)) == label:
                     i += 1
                 n += 1
+                documents.append(Document(document, type=label))
         
+
+        print "Classes in Support Vector Machine Classifier"
+        print classifier.classes
+
+        print "Confusion Matrix is:"
+        print classifier.confusion_matrix(data[:100])(True)
+
+        print "SVM Model Performance"
+        accuracy, precision, recall, f1 = classifier.test(data[:100])
+
+        print "Accuracy = %.6f; F-Score = %.6f; Precision = %.6f; Recall = %.6f" % (accuracy, f1, precision, recall)
+
+        print "Area Under the Curve: %0.6f" % classifier.auc(documents, k=10)
+
+        print "Accuracy is:"
         print float(i) / n
+
+        print "10-fold CV"
+        print k_fold_cv(SVM, documents=documents, folds=10)
 
     def buildModel(self, *args, **kwargs):
         ''' Performs model building from training using SVM algorithm 
@@ -195,14 +271,14 @@ class SVMLearner:
         classifier = SVM()
 
         print "loading document corpus..."
-        data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedumplimited.csv"))
+        data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
         data = shuffled(data)
 
         print "training svm model..."
 
-        for document, label in data[:100]:
+        for document, label in data[:460]:
             print "Document and label are", [document, label]
-            classifier.train(Document(document, type=label))
+            classifier.train(Document(document, type=str(label)))
 
         #Saving model to file system.
         try:

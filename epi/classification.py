@@ -274,8 +274,6 @@ class NB2:
         label = classifier.classify(Document(document))
         probability = classifier.classify(Document(document), discrete=False)[label]
 
-        print "Document class is %s" % label
-
         id = str(hash(label + document))
 
         if ("positive" in label):
@@ -289,9 +287,6 @@ class NB2:
 
         nb_predictions.save("predictions/NB/patterns_nb.csv")
         nb_corpus.save("corpora/NB/nb.csv")
-
-        print "Total predictions:", len(nb_predictions)
-        print "Total documents in corpus:", len(nb_corpus)
 
         return label
 
@@ -391,9 +386,6 @@ class SVMLearner:
         classifier = Classifier.load('models/svm_model2.ept')
         label = classifier.classify(Document(document))
 
-        print "Document class is %s" % label
-
-
         id = str(hash(label + document))
 
         if ("positive" in label):
@@ -407,8 +399,5 @@ class SVMLearner:
 
         svm_predictions.save("predictions/svm.csv")
         svm_corpus.save("corpora/svm/svm.csv")
-
-        print "Total predictions:", len(svm_predictions)
-        print "Total documents in corpus:", len(svm_corpus)
 
         return label

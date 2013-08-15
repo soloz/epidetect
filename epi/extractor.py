@@ -19,28 +19,41 @@ class TweetExtractor:
     ''' This class will extract tweets from Twitter via the Twitter search and streaming APIs. 
     The tweets would be stored in a CSV file for model building and subsequently into an SQL database '''
 
-    def tweetStream(self):
+    def startServer(self):
         try: 
         # We extract and store tweets in database and CSV file. Positive tweets
         # are stored in a database, while negative tweets are stored in CSV.
         # The CSV file is inspected in future for building corpus to use to 
         # build better classifier.
-            
+            print "Loading and Initializing Model, Connecting to Twitter...."
+
             patterns_nb = NB2()
             patterns_svm = SVMLearner()
 
-            stream_corpus_table = Datasheet.load("corpora/twitter/tweets_stream_data.csv")
-            index_corp = dict.fromkeys(stream_corpus_table [0], True)
+            stream_corpus_table_nb = Datasheet.load("corpora/twitter/tweets_stream_data_nb.csv")
+            index_corp_nb = dict.fromkeys(stream_corpus_table_nb.columns[0], True)
 
-            stream_predict_table = Datasheet.load("predictions/NB/nb_twitter.csv")
-            index_pred = dict.fromkeys(stream_predict_table.columns[0], True)
+            stream_corpus_table_svm = Datasheet.load("corpora/twitter/tweets_stream_data_svm.csv")
+            index_corp_svm = dict.fromkeys(stream_corpus_table_svm.columns[0], True)
+
+            stream_predict_table_nb = Datasheet.load("predictions/twitter/nb_twitter.csv")
+            index_pred_nb = dict.fromkeys(stream_predict_table_nb.columns[0], True)
+
+            stream_predict_table_svm = Datasheet.load("predictions/twitter/svm_twitter.csv")
+            index_pred_svm = dict.fromkeys(stream_predict_table_svm.columns[0], True)
 
         except:
-            stream_predict_table = Datasheet()
-            index_pred = {}
-            stream_corpus_table = Datasheet()
-            index_corp = {}
+            stream_predict_table_nb = Datasheet()
+            index_pred_nb = {}
+            stream_corpus_table_svm = Datasheet()
+            index_corp_svm = {}
 
+            stream_predict_table_svm = Datasheet()
+            index_pred_svm = {}
+            stream_corpus_table_nb = Datasheet()
+            index_corp_nb = {}
+
+            print "Error Initialization Model of Loading Files or Connecting to Twitter...."
         try:
             ensemble_table = Datasheet.load("predictions/ensenmble/ensenmble.csv")
         except:
@@ -52,7 +65,13 @@ class TweetExtractor:
         #diseases are tracked on twitter.
         stream_api = Twitter().stream("flu, swine flu, West Nile Virus, Tuberculosis, Avian Influenza, Influenza, Measles, Acute Intestinal Infection, Dengue, Respiratory Syndrome, Albinism, Coronavirus, Polio, Legionella, Gastroenteric Syndrome, African Swine, H1N1, Hepatitis A, Ebola, Hendra Virus, Influenzavirus, Meningitis, H7N9 virus, SARS")
 
+
+        print "Model Loading and Initialization Completed. Connection Successful...."
+        counter = 0
+
         while True:
+            counter +=1 
+
         #for i in range(100):
             #print i
             # Poll Twitter to see if there are new tweets.
@@ -63,27 +82,36 @@ class TweetExtractor:
             
             #Determination of positve/negative tweets.
             for twt in reversed(stream_api):
+                print "----------------------------------------------------Instance = %s-----------------------------------------------------------------------------------------" % counter
                                 
                 langDetect = LangDetect()
                 lang = langDetect.lang_detect(twt.text)
                 
-                print "Tweet is %s, Lang = %s" % (twt.text, lang)
+                print "Tweet: %s, Lang: %s" % (twt.text, lang)
 
                 if ('en' in lang):
 
-
-                    model = NaiveBayes()
+                    #model = NaiveBayes() ; Model undeployed in version 0.7 (ensemble version)
                     #classifier = model.buildModel() This line is no longer required in version 0.6
-                    label = model.classify(twt.text)
+                    #label = model.classify(twt.text) #Discarding the old NB classifier.
+
+                    #Deployment of Model Ensemble of SVM and NB
+                    nb_label = patterns_nb.classify(twt.text)
+                    svm_label = patterns_svm.classify(twt.text)
 
                     geolocation = LocationDetect()
                     
-                    print "Label of tweet is %s" % label
-                    print "Tweeter Location is", geolocation.getTweeterLocation(twt.author)
+                    print "NB Label: %s" % nb_label
+                    print "SVM Label: %s" % svm_label
+                    print "Location:", geolocation.getTweeterLocation(twt.author)
                     
                     id = str(hash(twt.author + twt.text))
 
-                    if (label =='positive'):
+                    if "positive" in nb_label and "positive" in svm_label:
+
+                        label = nb_label #setting the label of tweet.
+                        ensemble_table.append([nb_label, twt.text, twt.date]) #Storing ensemble result in CSV format before database storage
+
                         tweet = Tweet()
                         tweet.text = twt.text
                         tweet.label = label
@@ -110,7 +138,7 @@ class TweetExtractor:
                                 lng = "%.5f" % geolocationInfo[1]
                                 place = "%s" % geolocationInfo[2]
                                 
-                                print "Geolocation of %s is (%s, %s). Storing location information for document" % (place, lng, lat)
+                                print "Geolocation for %s is (%s, %s)" % (place, lng, lat)
                                 
                                 location = Location()
                                 location.name = place
@@ -139,31 +167,32 @@ class TweetExtractor:
                                 
                                 location.save()
                                 tweet.location = location
-                                tweet.location_string = str(location.name)
+                                tweet.location_string = location.name
                        
-                        print 'the tweet is %s, and storing in tweet database' % label
-                        print 'the tweet categories are ', tweet.disease_type, diseases
+                        print 'Tweet Label: %s. Storing in database' % label
+                        print 'Disease Named Entity: %s, Location Named Entity: %s ', tweet.disease_type, location
 
                         tweet.save()
                         
-                        if len(stream_predict_table) == 0 or id not in index_pred:
-                            stream_predict_table.append([id, twt.author, twt.text, label, twt.date])
-                            index_pred[id] = True
+                        if len(stream_predict_table_nb) == 0 or id not in index_pred_nb:
+                            stream_predict_table_nb.append([id, twt.author, twt.text, nb_label, twt.date])
+                            index_pred_nb[id] = True
+
+                        if len(stream_predict_table_svm) == 0 or id not in index_pred_svm:
+                            stream_predict_table_svm.append([id, twt.author, twt.text, svm_label, twt.date])
+                            index_pred_svm[id] = True
 
                     else:
-                        print 'the tweet is negative, storing in tweet corpus'
+                        print 'Tweet Labels: NB - %s, SVM - %s; Storing in tweet corpus' %  (nb_label, svm_label)
 
-                        if len(stream_corpus_table) == 0 or id not in index_corp:
-                            stream_corpus_table.append([id, twt.author, twt.text, label, twt.date])
-                            index_corp[id] = True
-
-                    #Testing NB and SVM Algorithm from Patterns API.
-                    nb_label = patterns_nb.classify(twt.text)
-                    svm_label = patterns_svm.classify(twt.text)
-
-                    if "positive" in nb_label and "positive" in svm_label:
-                        ensemble_table.append([nb_label, twt.text, twt.date])
+                        if len(stream_corpus_table_nb) == 0 or id not in index_corp_nb:
+                            stream_corpus_table_nb.append([id, twt.author, twt.text, nb_label, twt.date])
+                            index_corp_nb[id] = True
                             
+                        if len(stream_corpus_table_svm) == 0 or id not in index_corp_svm:
+                            stream_corpus_table_svm.append([id, twt.author, twt.text, svm_label, twt.date])
+                            index_corp_svm[id] = True
+
 
             # Clear the buffer every so often.
             stream_api.clear()
@@ -172,11 +201,11 @@ class TweetExtractor:
             #time.sleep(1)   
 
             ensemble_table.save("predictions/ensenmble/ensenmble.csv")
-            stream_predict_table.save("predictions/NB/nb_twitter.csv")
-            stream_corpus_table.save("corpora/twitter/tweets_stream_data.csv")
+            stream_predict_table_nb.save("predictions/twitter/nb_twitter.csv") 
+            stream_predict_table_svm.save("predictions/twitter/svm_twitter.csv")
+            stream_corpus_table_nb.save("corpora/twitter/tweets_stream_data_nb.csv")
+            stream_corpus_table_svm.save("corpora/twitter/tweets_stream_data_svm.csv")
 
-        print "Total corpus results:", len(stream_corpus_table)
-        print "Total predicted results:", len(stream_predict_table)
         print
         
 

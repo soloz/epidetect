@@ -8,6 +8,7 @@ import nltk
 from epi.models import Tweet, Location, LocationType
 from pattern.en     import tag, predicative 
 from pattern.db  import Datasheet, pprint, csv
+import pickle
 
 
 class NaiveBayes:
@@ -15,69 +16,66 @@ class NaiveBayes:
     '''
     def __init__(self):
         self.word_features_test =[]
+        self.word_features_train = []
+        
+        try:
+            self.modelfile = open('models/nb_model2.ept', 'r')
+            self.loadedclassifier = pickle.load(self.modelfile)
+        except:
+            print "Something is wrong with loading"
 
     def buildModel(self):
         ''' This method performs model building and intermittent model 
         optimizations based on trained corpus. Naive Bayes classifier has been
         used in training a model.
         '''
-        global word_features_train
+        #global word_features_train
         global classifier
-        global word_features_test
+        #global word_features_test
 
         #Sample documents obtained from corpus.
         train_tweets = []
         test_tweets = []
+        pos_event_tweets_train = []
+        neg_event_tweets_train = []
+        pos_event_tweets_test = []
+        neg_event_tweets_test = []
 
-        #Positive instances of tweets for training
-        pos_event_tweets_train = [('10 cases of h1n1 has been reported in saudi', 'positive'),('5 killed in saudi of h1n1', 'positive'),
-        ('10 people have been said to contract h1n1', 'positive'),('25 people infected with h1n1 now in the hospital in argentina', 'positive'),
-        ('traces of h1n1 recorded near turkey', 'positive'), ('private hospitals advised to close down because of the noticed h1n1', 'positive'),
-         ('2 people dead from h1n1 virus', 'positive'), 
-         ('H1N1 flu outbreak in northern Chile kills 11: SANTIAGO - At least 11 people have been killed in an  outbreak', 'positive'),
-         (' Why H7N9 bird flu cases arose so quickly.', 'positive'),
-         ('H1N1 flu outbreak in northern Chile kills 11', 'positive'),
-         ('New case of h1n1 confirmed in China', 'positive')         ]
+        #Load training data from CSV
+        data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
 
-        #Negative instances of tweets for training model.
-        neg_event_tweets_train = [('how to take care of h1n1', 'negative'),('h1n1 and how to prevent it', 'negative'),
-        ('i\'m having flu', 'negative'),('is h1n1 a deluge in the 21st century ?', 'negative'),
-        ('how are we affected by upsurge in the h1n1 recently', 'negative'), ('is this h1n1 or what ?', 'negative'),
-        ('what are the symptoms of h1n1 virus', 'negative'),
-        ('Thought it was flu. The doctor said no. There are giant lumps in my throat. I have to take a shitload of antibiotics. It\'s rubbish', 'negative'),
-        ('Nursing Students Forced To Have Flu Shot ', 'negative'),
-        ('EG Flu Tracking News Virus cuts gold kiwifruit crop', 'negative'),
-        ('how can we curb the situation of h1n1 ? ', 'negative')]
+        #Building Training set
+        for doc, label in data[100:]:
+            #Positive instances of tweets for training
+            if "positive" in label:
+                pos_event_tweets_train.append((doc, str(label))) 
+            else:
+            #Negative instances of tweets for training model.
+                neg_event_tweets_train.append((doc, str(label))) 
 
-
-        #Positive instances of tweets for testing model.
-        pos_event_tweets_test = [('there are 7 reported cases of h1n1 in zambia', 'positive'),('5 reported dead repeated cases of h1n1', 'positive'),
-        ('h1n1 outbreak has been discovered near india', 'positive'),('50 people have died so far in middle east over outbreak of h1n1', 'positive'),
-        ('detection of h1n1 in turkey', 'positive'), ('many hospitals have been closed down due to outbreak of h1n1', 'positive') ]
-
-
-        #Negative instances of tweets for testing model.
-        neg_event_tweets_test = [('RT @trutherbot: Protip: Flu shots do not work.', 'negative'),
-        ('Retweet this.... doctors are saying there might be a new flu, and that they don\'t have the vaccination..  http://t.co/Apk3QNjFs1', 'negative'),
-        ('Nothing seems to be working for this flu...', 'negative'),
-        ('EG Flu Tracking News 84 in state die of H1N1 in 6 months - Times of India http://t.co/GaDDrTiDNz', 'negative'),
-        ('Flu season comes and goes, but #WordFlu season is here to stay! #NoYouWontGetSick #ItsGoingToBeFine #ItsAGame', 'negative'), 
-        ('@Perrie_Ndublet I had the flu so I went to the loo', 'negative')]
+        #Building Training set
+        for doc, label in data[:100]:
+            #Positive instances of tweets for training
+            if "positive" in label:
+                pos_event_tweets_test.append((doc, str(label))) 
+            else:
+            #Negative instances of tweets for training model.
+                neg_event_tweets_test.append((doc, str(label))) 
 
 
         #Training model using the document corpus above.
         for (words, sentiment) in pos_event_tweets_train + neg_event_tweets_train:
-            words_filtered = [e.lower() for e in words.split() if len(e) >= 3]
+            words_filtered = [e.lower() for e in words.split() if len(e) > 3]
             train_tweets.append((words_filtered, sentiment))
 
         #Testing model using test corpus. 
         for (words, sentiment) in pos_event_tweets_test + neg_event_tweets_test:
-            words_filtered = [e.lower() for e in words.split() if len(e) >= 3]
+            words_filtered = [e.lower() for e in words.split() if len(e) > 3]
             test_tweets.append((words_filtered, sentiment))
 
         #Building word features
-        word_features_train = self.get_word_features(self.get_words_in_tweets(train_tweets))
-        word_features_test = self.get_word_features(self.get_words_in_tweets(test_tweets))
+        self.word_features_train = self.get_word_features(self.get_words_in_tweets(train_tweets))
+        self.word_features_test = self.get_word_features(self.get_words_in_tweets(test_tweets))
 
         training_set = nltk.classify.apply_features(self.extract_train_features, train_tweets)
         test_set = nltk.classify.apply_features(self.extract_test_features, test_tweets)
@@ -88,7 +86,42 @@ class NaiveBayes:
 
         print classifier.show_most_informative_features(32)
 
+        print "Saving model to file models/nb_model2.ept."
+
+        modelfile = open('models/nb_model2.ept', 'w')
+        pickle.dump(classifier, modelfile)
+        modelfile.close()
+
+        modelf = open('models/nb_model2.ept', 'r')
+        classf=pickle.load(modelf)
+        print 'accuracy:', nltk.classify.util.accuracy(classf, test_set)
+
         return classifier
+
+    def testModel(self):
+        #Load training data from CSV
+        data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
+        test_tweets = []
+        pos_event_tweets_test = []
+        neg_event_tweets_test = []
+
+        for doc, label in data[:100]:
+            #Positive instances of tweets for training
+            if "positive" in label:
+                pos_event_tweets_test.append((doc, str(label))) 
+            else:
+            #Negative instances of tweets for training model.
+                neg_event_tweets_test.append((doc, str(label))) 
+
+        for (words, sentiment) in pos_event_tweets_test + neg_event_tweets_test:
+            words_filtered = [e.lower() for e in words.split() if len(e) > 3]
+            test_tweets.append((words_filtered, sentiment))
+        
+        test_set = nltk.classify.apply_features(self.extract_test_features, test_tweets)
+
+        print 'accuracy:', nltk.classify.util.accuracy(self.loadedclassifier, test_set)
+
+        print self.loadedclassifier.show_most_informative_features(32)
 
 
     def get_words_in_tweets(self, documents):
@@ -119,7 +152,7 @@ class NaiveBayes:
         document_words = set(document)
         features = {}
 
-        for word in word_features_train:
+        for word in self.word_features_train:
             features['contains(%s)' % word] = (word in document_words)
         return features    
 
@@ -129,21 +162,23 @@ class NaiveBayes:
         document_words = set(document)
         features = {}
 
-        for word in word_features_test:
+        for word in self.word_features_test:
             features['contains(%s)' % word] = (word in document_words)
         return features  
 
-    def classify(self, *args):
+    def classify_old(self, *args):
         ''' Performs classification of new documents.
         '''
         label = args[1].classify(self.extract_train_features(args[0].split()))
 
         return label
 
-    def testModel(self):
-        ''' Perform model evaluation in order to obtain F-measure, Accuracy and Precision values.
+    def classify(self, *args):
+        ''' Performs classification of new documents.
         '''
+        label = self.loadedclassifier.classify(self.extract_train_features(args[0].split()))
 
+        return label
 
 class NB2:
     ''' This class holds method stubs and some utilities for 
@@ -154,13 +189,17 @@ class NB2:
         ''' Perform learning of a Model from training data.
         '''
         documents = []
+        data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
 
         if args:
             classifier = Classifier.load('models/nb_model.ept')
             print "Document class is %s" % classifier.classify(Document(args[0]))
+            print "Document probability is : ", classifier.classify(Document(args[0]), discrete=False) 
+            label = classifier.classify(Document(args[0]), discrete=False)
+
+            print label["positive"]
 
         else:
-            data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
             i = n = 0
             classifier = Classifier.load('models/nb_model.ept')
             data = shuffled(data)
@@ -233,6 +272,7 @@ class NB2:
         #Load model from file system
         classifier = Classifier.load('models/nb_model.ept')
         label = classifier.classify(Document(document))
+        probability = classifier.classify(Document(document), discrete=False)[label]
 
         print "Document class is %s" % label
 
@@ -240,11 +280,11 @@ class NB2:
 
         if ("positive" in label):
             if len(nb_predictions) == 0 or id not in index_pred:
-                nb_predictions.append([id, label, document])
+                nb_predictions.append([id, label, document, probability])
                 index_pred[id] = True
                 
         if len(nb_corpus) == 0 or id not in index_corp:
-            nb_corpus.append([id, label, document])
+            nb_corpus.append([id, label, document, probability])
             index_corp[id] = True
 
         nb_predictions.save("predictions/NB/patterns_nb.csv")
@@ -253,7 +293,7 @@ class NB2:
         print "Total predictions:", len(nb_predictions)
         print "Total documents in corpus:", len(nb_corpus)
 
-
+        return label
 
 class SVMLearner:
     ''' This class holds method stubs and some utilities for 
@@ -267,14 +307,15 @@ class SVMLearner:
         '''
 
         documents = []    
+        data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
 
         if args:
-            classifier = Classifier.load('models/svm_model2.ept')
-            print "Document is ", Document(args[0])
+            classifier = Classifier.load('models/svm_model3_probability.ept')
             print "Document class is %s" % classifier.classify(Document(args[0]))
+            print "Document probability is " 
+            print classifier.classify(Document(args[0]), discrete=False)
 
         else:
-            data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
             i = n = 0
             classifier = Classifier.load('models/svm_model2.ept')
             data = shuffled(data)
@@ -305,11 +346,12 @@ class SVMLearner:
         print "10-fold CV"
         print k_fold_cv(SVM, documents=documents, folds=10)
 
+
     def buildModel(self, *args, **kwargs):
         ''' Performs model building from training using SVM algorithm 
         implementation in patters.vector API.
         '''
-        classifier = SVM()
+        classifier = SVM(type = CLASSIFICATION, kernel=LINEAR, probability = True)
 
         print "loading document corpus..."
         data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
@@ -324,7 +366,7 @@ class SVMLearner:
         #Saving model to file system.
         try:
             print "saving build model..."
-            classifier.save('models/svm_model2.ept')
+            classifier.save('models/svm_model3_probability.ept')
         except:
             print "cannot save model file for some reason"
 
@@ -346,14 +388,15 @@ class SVMLearner:
             index_corp = {}
 
         #Load model from file system
-        classifier = Classifier.load('models/svm_model.ept')
+        classifier = Classifier.load('models/svm_model2.ept')
         label = classifier.classify(Document(document))
 
         print "Document class is %s" % label
 
+
         id = str(hash(label + document))
 
-        if ("1" in label):
+        if ("positive" in label):
             if len(svm_predictions) == 0 or id not in index_pred:
                 svm_predictions.append([id, label, document])
                 index_pred[id] = True
@@ -367,3 +410,5 @@ class SVMLearner:
 
         print "Total predictions:", len(svm_predictions)
         print "Total documents in corpus:", len(svm_corpus)
+
+        return label

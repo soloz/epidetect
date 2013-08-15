@@ -26,6 +26,9 @@ class TweetExtractor:
         # The CSV file is inspected in future for building corpus to use to 
         # build better classifier.
             
+            patterns_nb = NB2()
+            patterns_svm = SVMLearner()
+
             stream_corpus_table = Datasheet.load("corpora/twitter/tweets_stream_data.csv")
             index_corp = dict.fromkeys(stream_corpus_table [0], True)
 
@@ -38,6 +41,11 @@ class TweetExtractor:
             stream_corpus_table = Datasheet()
             index_corp = {}
 
+        try:
+            ensemble_table = Datasheet.load("predictions/ensenmble/ensenmble.csv")
+        except:
+            ensemble_table = Datasheet()
+        
         #twitter_api = Twitter(license=None,language="en")
 
         #Connection initiation to the twitter streaming API. The mentioned 
@@ -62,9 +70,11 @@ class TweetExtractor:
                 print "Tweet is %s, Lang = %s" % (twt.text, lang)
 
                 if ('en' in lang):
+
+
                     model = NaiveBayes()
-                    classifier = model.buildModel()
-                    label = model.classify(twt.text, classifier)
+                    #classifier = model.buildModel() This line is no longer required in version 0.6
+                    label = model.classify(twt.text)
 
                     geolocation = LocationDetect()
                     
@@ -147,6 +157,13 @@ class TweetExtractor:
                             stream_corpus_table.append([id, twt.author, twt.text, label, twt.date])
                             index_corp[id] = True
 
+                    #Testing NB and SVM Algorithm from Patterns API.
+                    nb_label = patterns_nb.classify(twt.text)
+                    svm_label = patterns_svm.classify(twt.text)
+
+                    if "positive" in nb_label and "positive" in svm_label:
+                        ensemble_table.append([nb_label, twt.text, twt.date])
+                            
 
             # Clear the buffer every so often.
             stream_api.clear()
@@ -154,6 +171,7 @@ class TweetExtractor:
             # Wait awhile between polls.
             #time.sleep(1)   
 
+            ensemble_table.save("predictions/ensenmble/ensenmble.csv")
             stream_predict_table.save("predictions/NB/nb_twitter.csv")
             stream_corpus_table.save("corpora/twitter/tweets_stream_data.csv")
 

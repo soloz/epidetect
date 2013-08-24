@@ -30,9 +30,6 @@ class TweetExtractor:
             patterns_nb = NB2()
             patterns_svm = SVMLearner()
 
-            stream_corpus_table_nb = Datasheet.load("corpora/twitter/tweets_stream_data_nb.csv")
-            index_corp_nb = dict.fromkeys(stream_corpus_table_nb.columns[0], True)
-
             stream_corpus_table_svm = Datasheet.load("corpora/twitter/tweets_stream_data_svm.csv")
             index_corp_svm = dict.fromkeys(stream_corpus_table_svm.columns[0], True)
 
@@ -42,6 +39,9 @@ class TweetExtractor:
             stream_predict_table_svm = Datasheet.load("predictions/twitter/svm_twitter.csv")
             index_pred_svm = dict.fromkeys(stream_predict_table_svm.columns[0], True)
 
+            stream_corpus_table_nb = Datasheet.load("corpora/twitter/tweets_stream_data_nb.csv")
+            index_corp_nb = dict.fromkeys(stream_corpus_table_nb.columns[0], True)
+  
         except:
             stream_predict_table_nb = Datasheet()
             index_pred_nb = {}
@@ -56,9 +56,18 @@ class TweetExtractor:
             print "Error Initialization Model of Loading Files or Connecting to Twitter...."
         try:
             ensemble_table = Datasheet.load("predictions/ensenmble/ensenmble.csv")
+            index_corp_ensemble =  dict.fromkeys(ensemble_table.columns[0], True)
+            ensemble_table_negative = Datasheet.load("predictions/ensenmble/ensenmble_negative.csv")
+            index_corp_ensemble_negative = dict.fromkeys(ensemble_table_negative.columns[0], True)
         except:
             ensemble_table = Datasheet()
-        
+            index_corp_ensemble = {}
+
+            ensemble_table_negative = Datasheet()
+            index_corp_ensemble_negative = {}
+
+            print "Error Loading Ensemble Model CSV Files...."
+
         #twitter_api = Twitter(license=None,language="en")
 
         #Connection initiation to the twitter streaming API. The mentioned 
@@ -82,13 +91,13 @@ class TweetExtractor:
             
             #Determination of positve/negative tweets.
             for twt in reversed(stream_api):
-                print "----------------------------------------------------Instance = %s-----------------------------------------------------------------------------------------" % counter
+                print "----------------------------------------------------Instance %s-----------------------------------------------------------------------------------------" % counter
                                 
                 langDetect = LangDetect()
                 lang = langDetect.lang_detect(twt.text)
                 
-                print "Tweet: %s, Lang: %s" % (twt.text, lang)
-
+                print "Tweet: %s" % twt.text
+                print "language: %s" %  lang
                 if ('en' in lang):
 
                     #model = NaiveBayes() ; Model undeployed in version 0.7 (ensemble version)
@@ -110,7 +119,10 @@ class TweetExtractor:
                     if "positive" in nb_label and "positive" in svm_label:
 
                         label = nb_label #setting the label of tweet.
-                        ensemble_table.append([nb_label, twt.text, twt.date]) #Storing ensemble result in CSV format before database storage
+                        
+                        if len(ensemble_table) == 0 or id not in index_corp_ensemble:
+                            ensemble_table.append([id, twt.text, label, twt.date])
+                            index_corp_ensemble[id] = True
 
                         tweet = Tweet()
                         tweet.text = twt.text
@@ -169,53 +181,61 @@ class TweetExtractor:
                                 tweet.location = location
                                 tweet.location_string = location.name
                        
-                        print 'Tweet Label: %s. Storing in database' % label
-                        print 'Disease Named Entity: %s, Location Named Entity: %s ', tweet.disease_type, location
+                                print '____Summary___'
+                                print 'Tweet Label: %s. Storing in database' % label
+                                print 'Disease Named Entity: %s, Location Named Entity: %s' % (tweet.disease_type, location)
 
                         tweet.save()
-                        
+
+                    elif "negative" in nb_label and "negative" in svm_label:
+                        print '____Summary___'
+                        print 'Tweet Labels: NB - %s, SVM - %s; Storing in corpus' %  (nb_label, svm_label)
+                      
+                        if len(ensemble_table_negative) == 0 or id not in index_corp_ensemble_negative:
+                            ensemble_table_negative.append([id, twt.text, svm_label, twt.date])
+                            index_corp_ensemble_negative[id] = True
+
+                    elif "positive" in nb_label and "negative" in svm_label:
+                        print '____Summary___'
+                        print 'Tweet Labels: NB - %s, SVM - %s; Storing in tweet corpus' %  (nb_label, svm_label)
+
+                        if len(stream_corpus_table_svm) == 0 or id not in index_corp_svm:
+                            stream_corpus_table_svm.append([id, twt.author, twt.text, svm_label, twt.date])
+                            index_corp_svm[id] = True
+
                         if len(stream_predict_table_nb) == 0 or id not in index_pred_nb:
                             stream_predict_table_nb.append([id, twt.author, twt.text, nb_label, twt.date])
                             index_pred_nb[id] = True
+
+                    elif "negative" in nb_label and "positive" in svm_label:
+                        print '____Summary___'
+                        print 'Tweet Labels: NB - %s, SVM - %s; Storing in tweet corpus' %  (nb_label, svm_label)
+                      
+                        if len(stream_corpus_table_nb) == 0 or id not in index_corp_nb:
+                            stream_corpus_table_nb.append([id, twt.author, twt.text, nb_label, twt.date])
+                            index_corp_nb[id] = True
 
                         if len(stream_predict_table_svm) == 0 or id not in index_pred_svm:
                             stream_predict_table_svm.append([id, twt.author, twt.text, svm_label, twt.date])
                             index_pred_svm[id] = True
 
-                    else:
-                        print 'Tweet Labels: NB - %s, SVM - %s; Storing in tweet corpus' %  (nb_label, svm_label)
-
-                        if len(stream_corpus_table_nb) == 0 or id not in index_corp_nb:
-                            stream_corpus_table_nb.append([id, twt.author, twt.text, nb_label, twt.date])
-                            index_corp_nb[id] = True
-                            
-                        if len(stream_corpus_table_svm) == 0 or id not in index_corp_svm:
-                            stream_corpus_table_svm.append([id, twt.author, twt.text, svm_label, twt.date])
-                            index_corp_svm[id] = True
-
-
+                ensemble_table.save("predictions/ensenmble/ensenmble.csv")
+                ensemble_table_negative.save("predictions/ensenmble/ensenmble_negative.csv")
+                stream_predict_table_nb.save("predictions/twitter/nb_twitter.csv") 
+                stream_predict_table_svm.save("predictions/twitter/svm_twitter.csv")
+                stream_corpus_table_nb.save("corpora/twitter/tweets_stream_data_nb.csv")
+                stream_corpus_table_svm.save("corpora/twitter/tweets_stream_data_svm.csv")
             # Clear the buffer every so often.
             stream_api.clear()
 
             # Wait awhile between polls.
             #time.sleep(1)   
 
-            ensemble_table.save("predictions/ensenmble/ensenmble.csv")
-            stream_predict_table_nb.save("predictions/twitter/nb_twitter.csv") 
-            stream_predict_table_svm.save("predictions/twitter/svm_twitter.csv")
-            stream_corpus_table_nb.save("corpora/twitter/tweets_stream_data_nb.csv")
-            stream_corpus_table_svm.save("corpora/twitter/tweets_stream_data_svm.csv")
-
-        print
-        
-
 class GoogleExtractor:
     ''' This class will extract search documents from Google via the Google search APIs. 
     The documents would be stored in a CSV file for model building and subsequently into an SQL database '''
 
-
-    def googleSearch(self):
-    
+    def googleSearch(self):    
         engine = webpatterns.Google(license=None, language="en")
         
         q= "coronavirus"
@@ -228,19 +248,35 @@ class GoogleExtractor:
         # The CSV is loaded into an SQLite database at some point for future predictions.
         # It must be noted that the language of search outcomes in Google is somewhat different from the language used in tweets.
 
-            google_corpus_table = Datasheet.load("corpora/google/google_corpus_data.csv")
-            index_corp = dict.fromkeys(google_corpus_table.columns[0], True)
+            print "Loading and Initializing Model, Connecting to Google Search...."
 
-            google_predict_table = Datasheet.load("predictions/NB/nb_google.csv")
-            index_pred = dict.fromkeys(google_predict_table.columns[0], True)
-            
+            patterns_nb = NB2()
+            patterns_svm = SVMLearner()
+
+            google_corpus_table_nb = Datasheet.load("corpora/google/google_corpus_data_nb.csv")
+            index_corp_nb = dict.fromkeys(google_corpus_table_nb.columns[0], True)
+
+            google_predict_table_nb = Datasheet.load("predictions/NB/nb_google.csv")
+            index_pred_nb = dict.fromkeys(google_predict_table.columns[0], True)
+
+            google_corpus_table_svm = Datasheet.load("corpora/google/google_corpus_data_svm.csv")
+            index_corp_svm = dict.fromkeys(google_corpus_table_svm.columns[0], True)
+
+            google_predict_table_svm = Datasheet.load("predictions/SVM/svm_google.csv")
+            index_pred_svm = dict.fromkeys(google_predict_table_svm.columns[0], True)
+
         except:
-            google_corpus_table = Datasheet()
-            index_corp = {}
+            google_corpus_table_nb = Datasheet()
+            index_corp_nb = {}
             
-            google_predict_table = Datasheet()
-            index_pred = {}            
+            google_predict_table_nb = Datasheet()
+            index_pred_nb = {}    
 
+            google_corpus_table_svm = Datasheet()
+            index_corp_svm = {}
+            
+            google_predict_table_svm = Datasheet()
+            index_pred_svm = {}            
             
         for disease in ("flu, swine flu, West Nile Virus, Tuberculosis, Avian Influenza, \
             Influenza, Measles, Acute Intestinal Infection, Dengue, Respiratory Syndrome, \
@@ -252,35 +288,40 @@ class GoogleExtractor:
         p = "DISEASE" # Search pattern.
 
         for i in range(1,10):
+            counter = 0
+
             for result in engine.search(q, start=i, count=100, type=SEARCH):
-                print plaintext(result.text) # plaintext() removes HTML formatting.
-                print result.url
-                print result.date
-                print result.author
-                print
+
+                counter +=1
+                print "----------------------------------------------------Instance %s-----------------------------------------------------------------------------------------" % counter
 
                 s = result.text
-                
-                print "Search result is : %s" % s
                 s = plaintext(s)
 
-                print "Document is %s" % s
-              
+                print "Extracted document: %s" % s
+                print "Extracted URL: %s" % result.url
+
                 langDetect = LangDetect()
                 lang = langDetect.lang_detect(s)
                                 
-                print "Document (and Language) is %s, Lang = %s" % (s, lang)
+                print "Language: %s" % lang
 
                 if ('en' in lang):
-                    model = NaiveBayes()
-                    classifier = model.buildModel()
-                    label = model.classify(s, classifier)
-                    
-                    id = str(hash(label + plaintext(result.text)))
-                    
-                    print "Label of document is %s" % label
-                    
-                    if (label =='positive'):
+                    #model = NaiveBayes() Undeploying model
+                    #classifier = model.buildModel() Undeploying classifier
+                    nb_label = patterns_nb.classify(s)
+                    svm_label = patterns_nb.classify(s)
+
+                    print "NB Label: %s" % nb_label
+                    print "SVM Label: %s" % svm_label                        
+
+                    id_nb = str(hash(nb_label + plaintext(result.text)))
+                    id_svm = str(hash(svm_label + plaintext(result.text)))
+
+                    if (nb_label =='positive' and svm_label == 'positive'):
+
+                        label = nb_label
+
                         googledoc = GoogleDocument()
                         googledoc.document = s
                         googledoc.label = label
@@ -295,17 +336,17 @@ class GoogleExtractor:
                             else:
                                 googledoc.disease_type = diseases[0]
                        
-                        print 'The document is positive, storing in database'
-
                         geolocation = LocationDetect()
                         country = geolocation.extractLocation(s)
-
+                        
+                        print '____Summary___'
+                        print 'Document Label: %s. Storing in database' % label  
+                        
                         if (country):
-                            print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
+                            print "Geolocation: (%.5f, %.5f)" % (geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
                             lat = "%.5f" % geolocation.detectLocation(country)[0]
                             lng = "%.5f" % geolocation.detectLocation(country)[1]
-                            print (lat, lng)
-
+                         
                             locationtype = LocationType.get_all_locationtypes()[0]
                             location = Location()
                             location.name = country
@@ -318,31 +359,34 @@ class GoogleExtractor:
                             googledoc.location = location
                             googledoc.location_string = location.name                            
                         
-                        print 'the document is %s, and storing in tweet database' % label
-                        print 'the document categories are ', googledoc.disease_type, diseases
-                        print 'the document location is ', googledoc.location_string
-                        
+                        print 'Disease Named Entity: %s, Location Named Entity: %s' % (googledoc.disease_type, googledoc.location_string)
+   
                         googledoc.save()
                         
                                    
-                        if len(google_predict_table) == 0 or id not in index_pred:
-                            google_predict_table.append([id, label, plaintext(result.text), result.date])
-                            index_pred[id] = True
-                 
+                        if len(google_predict_table_nb) == 0 or id not in index_pred_nb:
+                            google_predict_table_nb.append([id, nb_label, plaintext(result.text), result.date])
+                            index_pred_nb[id_nb] = True
+
+                        if len(google_predict_table_svm) == 0 or id not in index_pred_svm:
+                            google_predict_table_svm.append([id, svm_label, plaintext(result.text), result.date])
+                            index_pred_svm[id] = True 
                     else:
-                        print 'the document is negative, storing in tweet corpus'
+                        print 'the document is negative, storing in Google corpus'
 
-                        if len(google_corpus_table) == 0 or id not in index_corp:
-                            google_corpus_table.append([id, s, label, result.date])
-                            index_corp[id] = True
+                        if len(google_corpus_table_svm) == 0 or id not in index_corp_svm:
+                            google_corpus_table_svm.append([id, s, svm_label, result.date])
+                            index_corp_svm[id] = True
 
+                        if len(google_corpus_table_nb) == 0 or id not in index_corp_nb:
+                            google_corpus_table_nb.append([id, s, nb_label, result.date])
+                            index_corp_nb[id] = True
 
-            google_predict_table.save("predictions/NB/nb_google.csv")
-            google_corpus_table.save("corpora/google/google_corpus_data.csv")
+            google_predict_table_nb.save("predictions/NB/nb_google.csv")
+            google_corpus_table_nb.save("corpora/google/google_corpus_data_nb.csv")
+            google_predict_table_svm.save("predictions/SVM/nb_google_svm.csv")
+            google_corpus_table_svm.save("corpora/google/google_corpus_data_svm.csv")
 
-        print
-        print len(google_corpus_table), "results from corpus table."
-        print len(google_predict_table), "results from predictions table."
 
 class BingExtractor:
     ''' This class will extract search documents from Bing via the Bing search APIs. 
@@ -357,18 +401,35 @@ class BingExtractor:
         # The CSV is loaded into an SQLite database at some point for future predictions.
         # It must be noted that the language of search outcomes in Google is somewhat different from the language used in tweets.
 
-            bing_corpus_table = Datasheet.load("corpora/bing/bing_corpus_data.csv")
-            index_corp = dict.fromkeys(google_corpus_table.columns[0], True)
+            print "Loading and Initializing Model, Connecting to Bing Search...."
 
-            bing_predict_table = Datasheet.load("predictions/NB/nb_bing.csv")
-            index_pred = dict.fromkeys(bing_predict_table.columns[0], True)
-            
+            patterns_nb = NB2()
+            patterns_svm = SVMLearner()
+
+            bing_corpus_table_nb = Datasheet.load("corpora/bing/bing_corpus_data_nb.csv")
+            index_corp_nb = dict.fromkeys(bing_corpus_table_nb.columns[0], True)
+
+            bing_predict_table_nb = Datasheet.load("predictions/NB/nb_bing.csv")
+            index_pred_nb = dict.fromkeys(bing_predict_table_nb.columns[0], True)
+
+            bing_corpus_table_svm = Datasheet.load("corpora/bing/bing_corpus_data_svm.csv")
+            index_corp_svm = dict.fromkeys(bing_corpus_table_svm.columns[0], True)
+
+            bing_predict_table_svm = Datasheet.load("predictions/SVM/svm_bing.csv")
+            index_pred_svm = dict.fromkeys(bing_predict_table_svm.columns[0], True)
+
         except:
-            bing_corpus_table = Datasheet()
-            index_corp = {}
+            bing_corpus_table_nb = Datasheet()
+            index_corp_nb = {}
             
-            bing_predict_table = Datasheet()
-            index_pred = {}            
+            bing_predict_table_nb = Datasheet()
+            index_pred_nb = {}    
+
+            bing_corpus_table_svm = Datasheet()
+            index_corp_svm = {}
+            
+            bing_predict_table_svm = Datasheet()
+            index_pred_svm = {}              
 
 
         q = 'coronavirus'         # Bing search query
@@ -382,32 +443,40 @@ class BingExtractor:
 
         p = "DISEASE" # Search pattern.
 
-        engine = Bing(license=None)
+        engine = webpatterns.Bing(license=None)
 
         for i in range(1): # max=10
+            counter = 0
             for result in engine.search(q, start=1, count=100, type=SEARCH, timeout=10):
 
-                s = result.description
-                
-                print "Search result is : %s" % s
+
+                counter +=1
+                print "---------------------------------------------------- Bing Document Instance %s-----------------------------------------------------------------------------------------" % counter
+
+                s = result.text
                 s = plaintext(s)
 
-                print "Document is %s" % s
-                
+                print "Extracted document: %s" % s
+                print "Extracted URL: %s" % result.url
+
                 langDetect = LangDetect()
                 lang = langDetect.lang_detect(s)
                                 
-                print "Document (and Language) is %s, Lang = %s" % (s, lang)
+                print "Language: %s" % lang
 
                 if ('en' in lang):
-                    model = NaiveBayes()
-                    classifier = model.buildModel()
-                    label = model.classify(s, classifier)
-                    
-                    id = str(hash(label + s)) 
-                    
-                    print "Label of tweet is %s" % label
-                    if (label =='positive'):
+
+                    nb_label = patterns_nb.classify(s)
+                    svm_label = patterns_nb.classify(s)
+
+                    print "NB Label: %s" % nb_label
+                    print "SVM Label: %s" % svm_label                        
+
+                    id_nb = str(hash(nb_label + plaintext(result.text)))
+                    id_svm = str(hash(svm_label + plaintext(result.text)))
+
+                    if (nb_label =='positive' and svm_label == 'positive'):
+                        label = nb_label
                         bingdoc = BingDocument()
                         bingdoc.document = s
                         bingdoc.label = label
@@ -418,17 +487,18 @@ class BingExtractor:
  
                         if diseases:
                             if (len(diseases) > 1):
-                                googledoc.disease_type = ','.join(diseases)
+                                bingdoc.disease_type = ','.join(diseases)
                             else:
-                                googledoc.disease_type = diseases[0]
-                       
-                        print 'The document is positive, storing in database'
+                                bingdoc.disease_type = diseases[0]
 
                         geolocation = LocationDetect()
                         country = geolocation.extractLocation(s)
-                    
+                        
+                        print '____Summary___'
+                        print 'Document Label: %s. Storing in database' % label  
+
                         if (country):
-                            print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
+                            print "Geolocation: (%.5f, %.5f)" % (geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
                             lat = "%.5f" % geolocation.detectLocation(country)[0]
                             lng = "%.5f" % geolocation.detectLocation(country)[1]
                             print (lat, lng)
@@ -444,22 +514,31 @@ class BingExtractor:
                             bingdoc.location = location
                             bingdoc.location_string = location.name                            
                         
+                        print 'Disease Named Entity: %s, Location Named Entity: %s' % (bingdoc.disease_type, bingdoc.location_string)
                         bingdoc.save()
                                    
-                        if len(bing_predict_table) == 0 or id not in index_pred:
-                            bing_predict_table.append([id, label, s, result.date])
-                            index_pred[id] = True
+                        print 'Document is Negative, storing in Bing corpus'
+
+                        if len(bing_corpus_table_svm) == 0 or id not in index_corp_svm:
+                            bing_corpus_table_svm.append([id, s, svm_label, result.date])
+                            index_corp_svm[id] = True
+
+                        if len(bing_corpus_table_nb) == 0 or id not in index_corp_nb:
+                            bing_corpus_table_nb.append([id, s, nb_label, result.date])
+                            index_corp_nb[id] = True
                  
                     else:
-                        print 'the document is negative, storing in tweet corpus'
+                        print 'Document is negative, storing in Bing corpus'
 
-                        if len(bing_corpus_table) == 0 or id not in index_corp:
-                            bing_corpus_table.append([id, s, label, result.date])
-                            index_corp[id] = True
+                        if len(bing_corpus_table_svm) == 0 or id not in index_corp_svm:
+                            bing_corpus_table_svm.append([id, s, svm_label, result.date])
+                            index_corp_svm[id] = True
 
-            bing_predict_table.save("predictions/NB/nb_bing.csv")
-            bing_corpus_table.save("corpora/google/bing_corpus_data.csv")
+                        if len(bing_corpus_table_nb) == 0 or id not in index_corp_nb:
+                            bing_corpus_table_nb.append([id, s, nb_label, result.date])
+                            index_corp_nb[id] = True
 
-        print
-        print len(bing_corpus_table), "results from corpus table."
-        print len(bing_predict_table), "results from predictions table."
+            bing_predict_table_nb.save("predictions/NB/nb_bing.csv")
+            bing_corpus_table_nb.save("corpora/bing/bing_corpus_data_nb.csv")
+            bing_predict_table_svm.save("predictions/SVM/nb_bing_svm.csv")
+            bing_corpus_table_svm.save("corpora/bing/bing_corpus_data_svm.csv")

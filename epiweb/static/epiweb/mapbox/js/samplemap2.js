@@ -8,10 +8,15 @@ geolocationdata = new Array()
 colors = new Array()
 colors.push('#CC0033')
 colors.push('#0099ff')
+colors.push('#ffff00')
+
+var randomnumber=Math.floor(Math.random()*4)
 
 //Unpacking Coordinates data
 for (var i=0;i<mapsdata[1].length;i++)
 {
+
+randomnumber=Math.floor(Math.random()*3)
 
 var jsonobject =
    {
@@ -23,7 +28,7 @@ var jsonobject =
     properties: {
         title: mapsdata[1][i][1],
         // http://mapbox.com/developers/simplestyle/
-        'marker-color': colors[i]
+        'marker-color': colors[randomnumber]
     }
     };
     geolocationdata.push(jsonobject);

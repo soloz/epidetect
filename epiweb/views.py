@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from epi.models import *
 from django.views import generic
 from epiweb.prototypeform import ClassifyDocument
-from epi.classification import NaiveBayes
+from epi.classification import *
 from epi.epidetect import *
 from time import time as taim
 import json
@@ -82,26 +82,29 @@ def formhandler(request):
             #user = form.cleaned_data['userid']
             outcome = document
 
-            model = NaiveBayes()
-            classifier = model.buildModel()
-            outcome = model.classify(document, classifier)
+            #model = NaiveBayes(); Undeploying model
+            #classifier = model.buildModel(); Undeploying model
+            #outcome = model.classify(document, classifier) ; Undeploying model
+
+            patterns_svm = SVMLearner()
+            outcome = patterns_svm.classify(document)
             
             geolocation = LocationDetect()
             country = geolocation.extractLocation(document)
 
             if (country):
                 print "Geolocation of %s is (%.5f, %.5f). Storing location information for document" % (country, geolocation.detectLocation(country)[0], geolocation.detectLocation(country)[1])
-                lat = "%.6f" % geolocation.detectLocation(country)[0]
-                lng = "%.6f" % geolocation.detectLocation(country)[1]
+                #lat = "%.6f" % geolocation.detectLocation(country)[0]
+                #lng = "%.6f" % geolocation.detectLocation(country)[1]
 
-                locationtype = LocationType.get_all_locationtypes()[0]
-                location = Location()
-                location.name = country
-                location.latitude = lat
-                location.longitude = lng
-                location.level = 1
-                location.locationtype = locationtype
-                location.save()
+                #locationtype = LocationType.get_all_locationtypes()[0]
+                #location = Location()
+                #location.name = country
+                #location.latitude = lat
+                #location.longitude = lng
+                #location.level = 1
+                #location.locationtype = locationtype
+                #location.save()
 
             return render(request, 'epiweb/classify.html', {
                 'outcome':outcome
@@ -116,5 +119,6 @@ def formhandler(request):
         'form': form,
     })
 
-def documentclass(request):
-    pass
+def performance(request):
+
+    return render(request, 'epiweb/index2.html', {})

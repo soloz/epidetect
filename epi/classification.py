@@ -189,7 +189,10 @@ class NB2:
         ''' Perform learning of a Model from training data.
         '''
         documents = []
-        data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
+
+        data = Datasheet.load(os.path.join("corpora","twitter","trainer", "tweets_stream_data_nb.csv"))
+        data2 = Datasheet.load(os.path.join("corpora","twitter","trainer", "tweets_stream_data_svm.csv"))
+        data3 = Datasheet.load(os.path.join("corpora","twitter","trainer", "ensenmble.csv"))
 
         if args:
             classifier = Classifier.load('models/nb_model.ept')
@@ -201,31 +204,46 @@ class NB2:
 
         else:
             i = n = 0
+            pos=neg=0
             classifier = Classifier.load('models/nb_model.ept')
             data = shuffled(data)
 
-            for document, label in data[:100]:
+            for document, label in data[:]+data2[:]+data3[:]:
                 doc_vector = Document(document, type=str(label), stopwords=True)
                 documents.append(doc_vector)
+                if 'positive' in label:
+                    pos+=1
+                else:
+                    neg+=1
      
             print "10-fold CV"
             print k_fold_cv(NB, documents=documents, folds=10)
 
+        print "Neg: %s, Pos: %s" % (neg, pos)
+        print classifier.distribution
 
         print "Classes in Naive Bayes Classifier"
         print classifier.classes
 
         print "Area Under the Curve: %0.6f" % classifier.auc(documents, k=10)
 
+        print "Model Performance (Positive Classifications)"
+        accuracy, precision, recall, f1 = classifier.test(data[:]+data2[:]+data3[:], target='positive')
+        print "Accuracy = %.6f; F-Score = %.6f; Precision = %.6f; Recall = %.6f" % (accuracy, f1, precision, recall)
+
+        print "Model Performance(Negative Classifications)"
+        accuracy, precision, recall, f1 = classifier.test(data[:]+data2[:]+data3[:], target='negative')
+        print "Accuracy = %.6f; F-Score = %.6f; Precision = %.6f; Recall = %.6f" % (accuracy, f1, precision, recall)
+
         print "Model Performance"
-        accuracy, precision, recall, f1 = classifier.test(data[:100])
+        accuracy, precision, recall, f1 = classifier.test(data[:]+data2[:]+data3[:])
 
         print "Accuracy = %.6f; F-Score = %.6f; Precision = %.6f; Recall = %.6f" % (accuracy, f1, precision, recall)
 
         print "Confusion Matrix"
-        print classifier.confusion_matrix(data[:100])(True)
-
-
+        print classifier.confusion_matrix(data[:]+data2[:]+data3[:])
+        print classifier.confusion_matrix(data[:]+data2[:]+data3[:])('positive')
+        print classifier.confusion_matrix(data[:]+data2[:]+data3[:])('negative')
 
     def buildModel(self, *args, **kwargs):
         ''' Performs model building.
@@ -302,7 +320,10 @@ class SVMLearner:
         '''
 
         documents = []    
-        data = Datasheet.load(os.path.join("corpora","twitter","positivedatabasedump.csv"))
+
+        data = Datasheet.load(os.path.join("corpora","twitter","trainer", "ensemble", "tweets_stream_data_nb.csv"))
+        data2 = Datasheet.load(os.path.join("corpora","twitter","trainer", "ensemble", "tweets_stream_data_svm.csv"))
+        data3 = Datasheet.load(os.path.join("corpora","twitter","trainer", "ensemble", "ensenmble.csv"))
 
         if args:
             classifier = Classifier.load('models/svm_model3_probability.ept')
@@ -312,28 +333,47 @@ class SVMLearner:
 
         else:
             i = n = 0
+            pos=neg=0
             classifier = Classifier.load('models/svm_model2.ept')
-            data = shuffled(data)
+            #data = shuffled(data)
 
-            for document, label in data[:100]:
+            for document, label in data[:]+data2[:]+data3[:]:
                 if classifier.classify(Document(document)) == label:
                     i += 1
                 n += 1
                 documents.append(Document(document, type=label))
+
+                if 'positive' in label:
+                    pos+=1
+                else:
+                    neg+=1
         
 
-        print "Classes in Support Vector Machine Classifier"
+        print "Neg: %s, Pos: %s" % (neg, pos)
+        print classifier.distribution
+
+        print "Classes in SVM Classifier"
         print classifier.classes
 
-        print "Confusion Matrix is:"
-        print classifier.confusion_matrix(data[:100])(True)
+        print "Area Under the Curve: %0.6f" % classifier.auc(documents, k=10)
 
-        print "SVM Model Performance"
-        accuracy, precision, recall, f1 = classifier.test(data[:100])
+        print "SVM Model Performance (Positive Classifications)"
+        accuracy, precision, recall, f1 = classifier.test(data[:]+data2[:]+data3[:], target='positive')
+        print "Accuracy = %.6f; F-Score = %.6f; Precision = %.6f; Recall = %.6f" % (accuracy, f1, precision, recall)
+        
+        print "SVM Model Performance(Negative Classifications)"
+        accuracy, precision, recall, f1 = classifier.test(data[:]+data2[:]+data3[:], target='negative')
+        print "Accuracy = %.6f; F-Score = %.6f; Precision = %.6f; Recall = %.6f" % (accuracy, f1, precision, recall)
+
+        print "SVM Overall Model Performance"
+        accuracy, precision, recall, f1 = classifier.test(data[:]+data2[:]+data3[:])
 
         print "Accuracy = %.6f; F-Score = %.6f; Precision = %.6f; Recall = %.6f" % (accuracy, f1, precision, recall)
 
-        print "Area Under the Curve: %0.6f" % classifier.auc(documents, k=10)
+        print "SVM Confusion Matrix"
+        print classifier.confusion_matrix(data[:]+data2[:]+data3[:])
+        print classifier.confusion_matrix(data[:]+data2[:]+data3[:])('positive')
+        print classifier.confusion_matrix(data[:]+data2[:]+data3[:])('negative')
 
         print "Accuracy is:"
         print float(i) / n

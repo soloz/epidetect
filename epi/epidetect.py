@@ -241,7 +241,7 @@ class Utility:
         try: 
         # We extract information from database and store in a csv
             
-            data_dump = Datasheet.load("archive/database/datadump.csv")
+            data_dump = Datasheet.load("corpora/twitter/datadump2.csv")
             index = dict.fromkeys(data_dump[0], True)
 
         except:
@@ -257,13 +257,13 @@ class Utility:
                 '', tweet.location, ''])
                 index[id] = True
                 
-            data_dump.save("archive/database/datadump.csv")
+            data_dump.save("corpora/twitter/datadump2.csv")
         
         
     def loaddata(self):
         
         tokenizer = RegexpTokenizer(r'\w+|[^\w\s]+')
-        data_dump = Datasheet.load("archive/database/datadump.csv")
+        data_dump = Datasheet.load("archive/datadump.csv")
         index = dict.fromkeys(data_dump[0], True)
         
         for line in data_dump:
@@ -278,52 +278,22 @@ class Utility:
             place = line [8]
             tweet.tweet_time = line [7]
             
-            geolocation = LocationDetect()
-            geolocationInfo = None
-            
             if place:
-                geolocationInfo = geolocation.detectLocation(place)
-                print "Geolocation detected ", geolocationInfo
-            
-            for i in range(1,1000):
-                pass
-                
-            if geolocationInfo:
-                
-                lat = "%.5f" % geolocationInfo[0]
-                lng = "%.5f" % geolocationInfo[1]
-                place = "%s" % geolocationInfo[2]
-                           
+                       
                 location = epi.models.Location()
                 location.name = place
-                location.latitude = lat
-                location.longitude = lng
-                
-                tokens = tokenizer.tokenize(place)
-    
-                if len(tokens) > 1:                            
-                    location.level = 2
-                    locationtype = epi.models.LocationType.get_all_locationtypes()[1]
-                    
-                    parent_location = epi.models.Location()
-                    parent_location.name = tokens[len(tokens) - 1]
-                    parent_location.level = 1
-                    parent_locationtype = epi.models.LocationType.get_all_locationtypes()[0]
-                    parent_location.locationtype = parent_locationtype
-                    parent_location.save()
-                    location.parent = parent_location
-                                                        
-                else:
-                    location.level = 1
-                    locationtype = epi.models.LocationType.get_all_locationtypes()[0]
 
-                location.locationtype = locationtype
-                
+                lt = epi.models.LocationType()
+                lt.name = 'City'
+                location.locationtype = lt
+                location.level = 2
+
                 location.save()
+                
                 tweet.location = location
                 
                 try:
-                    tweet.location_string = str(location.name)
+                    tweet.location_string = place
                 except:
                     print "Unicode Error"
                 

@@ -44,6 +44,8 @@ class Location(models.Model):
     def get_all_locations():
         return Location.objects.all()
 
+    def __unicode__(self):
+        return self.name
 
 
 class Tweet(models.Model):
@@ -116,9 +118,15 @@ class Tweet(models.Model):
                 #lng =  tweet.location.longitude
                # name =  tweet.location.name
                 
-                lat = "%.5f" % tweet.location.latitude
-                lng = "%.5f" % tweet.location.longitude
-                name = "%s" % tweet.location.name
+                if tweet.location.latitude and tweet.location.longitude:
+                    lat = "%.5f" % tweet.location.latitude
+                    lng = "%.5f" % tweet.location.longitude
+                else:
+                    lat = "%.5f" % 0.000000
+                    lng = "%.5f" % 0.000000
+
+                if tweet.location.name:            
+                    name = "%s" % tweet.location.name
                 
                 try:
                     data.append([[float(lng), float(lat)], name]) 

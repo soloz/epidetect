@@ -270,15 +270,14 @@
           <div class="span7">
             <h3 class="footer-title">Project Description</h3>
             <p>EpiDetect is a software tool that supports early detection of infectious
-              disease outbreak. Outbreak knowledge discovered by mining texts from
+              disease outbreak. Outbreak knowledge is discovered by mining texts from
               the Social Media, with Twitter, Facebook (non-profile pages), and 
               Google Search Engine being the primary data sources.</br></br>
+              The project was developed by <a href="http://solomonadebayo.com">
+              Solomon Adebayo</a> in the <a href="http://www.cs.st-andrews.ac.uk/">School of Computer Science</a> of the  
+              <a href="http://www.st-andrews.ac.uk/">University of St Andrews</a> under the supervision of 
+              <a href="http://tom.host.cs.st-andrews.ac.uk/">Dr. T. Kelsey</a>.</br></br>
               Available at: <a href="http://www.epidetect.com" target="">epidetect.com/outbreaks</a>
-            </p>
-
-            <p class="pvl">
-              <a href="https://twitter.com/epidetect" class="twitter-share-button" data-url="http://designmodo.com/flat-free/" data-text="Flat UI Free - PSD&amp;HTML User Interface Kit" data-via="designmodo" data-size="large">Tweet</a>
-              <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
             </p>
 
             <a class="footer-brand" href="http://designmodo.com" target="_blank">
@@ -304,6 +303,13 @@
           </div>
         </div>
 
+          <div class="row">
+            <div class="span1">
+            </div>
+            <p>&copy; <a href="http://solomonadebayo.com">Solomon Adebayo</a>, University of St Andrews 2013</p>
+            <div class="span10">
+            </div>
+          </div>      
     </footer>
     
     
@@ -327,18 +333,6 @@
     {% endfor %}  
  
 </script>
-
-Data transfered
-
-{{data.mapsdata}}
-{{data.trendsdata}}
-{{data.countrydata}}
-{{data.diseases}}
-
-    {% for databundle in data.countrydata %}
-            {{databundle}}
-    {% endfor %} 
-
 
     <!-- Load JS here for greater good =============================-->
     <script src="{% static 'epiweb/mapbox/js/mapbox.js' %}"></script>

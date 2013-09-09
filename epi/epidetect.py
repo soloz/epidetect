@@ -3,7 +3,6 @@
 
 from pattern.web import SEARCH
 from pattern.web import Google, Twitter, Facebook, Bing
-from pygeocoder import Geocoder
 from geopy import geocoders   
 from geopy.geocoders import *
 from nltk import wordpunct_tokenize
